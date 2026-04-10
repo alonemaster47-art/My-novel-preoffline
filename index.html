@@ -6,7 +6,6 @@
     <title>Premium Offline Novel Reader</title>
     <style>
         :root {
-            /* โทนสีถนอมสายตา (Sepia/Paper) */
             --bg-color: #f1ede4; 
             --paper-color: #fdfaf2;
             --text-color: #2d2926; 
@@ -14,25 +13,15 @@
             --nav-bg: rgba(253, 250, 242, 0.98);
         }
 
-        /* บังคับซ่อนแถบ Google ทุกวิถีทาง */
+        /* บังคับซ่อนแถบบาร์ Google ทุกชนิด */
         .goog-te-banner-frame.skiptranslate, .goog-te-gadget-icon { display: none !important; }
         body { top: 0px !important; position: static !important; }
         .skiptranslate iframe { display: none !important; }
-        #google_translate_element select {
-            padding: 8px; border-radius: 6px; border: 1px solid var(--accent-color);
-            background: white; color: var(--text-color); width: 100%;
-        }
 
         body {
-            margin: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding-bottom: 80px;
-            overflow-x: hidden;
-            font-family: 'Sarabun', sans-serif;
+            margin: 0; background-color: var(--bg-color); color: var(--text-color);
+            display: flex; flex-direction: column; align-items: center;
+            padding-bottom: 80px; overflow-x: hidden; font-family: 'Sarabun', sans-serif;
         }
 
         /* --- แถบควบคุม (Auto-hide) --- */
@@ -55,10 +44,7 @@
             margin-top: 20px; padding: 50px 40px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);
             min-height: 95vh; box-sizing: border-box; border-radius: 4px;
         }
-        #content { 
-            white-space: pre-wrap; word-wrap: break-word; 
-            font-size: 20px; line-height: 1.8; outline: none;
-        }
+        #content { white-space: pre-wrap; word-wrap: break-word; font-size: 20px; line-height: 1.8; outline: none; }
 
         /* --- ปุ่มและการควบคุม --- */
         .controls { display: flex; justify-content: center; align-items: center; padding: 10px 0; gap: 10px; }
@@ -70,21 +56,23 @@
         .btn:hover { background: rgba(125, 90, 68, 0.1); border-color: var(--accent-color); }
         .btn-main { background: var(--accent-color) !important; color: white !important; }
 
-        /* --- Popup & Settings --- */
+        /* --- Popups --- */
         #toc-popup, #settings-panel, #translate-panel {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: white; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
             display: none; z-index: 2000; flex-direction: column; padding: 25px; width: 85%; max-width: 400px;
         }
-        #toc-popup { max-height: 70vh; }
-        #toc-list { overflow-y: auto; margin-top: 15px; border-top: 1px solid #eee; }
+        #toc-list { overflow-y: auto; max-height: 50vh; margin-top: 15px; border-top: 1px solid #eee; }
         .toc-item { padding: 12px; border-bottom: 1px solid #f9f9f9; cursor: pointer; }
         .toc-item:hover { background: #f5f5f5; color: var(--accent-color); }
         
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; z-index: 1999; }
         .setting-item { margin-bottom: 15px; }
         .setting-item label { display: block; font-size: 13px; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="range"] { width: 100%; padding: 8px; box-sizing: border-box; }
+        input[type="text"], input[type="range"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
+
+        /* ปรับแต่ง Dropdown Google ให้ดูเรียบง่าย */
+        #google_translate_element select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; font-family: sans-serif; }
 
         #progress-bar { height: 3px; background: var(--accent-color); width: 0%; transition: width 0.3s; }
     </style>
@@ -113,15 +101,15 @@
     <div class="overlay" id="overlay" onclick="closeAllPopups()"></div>
 
     <div id="toc-popup">
-        <h3 style="margin: 0 0 10px 0; color: var(--accent-color);">สารบัญ</h3>
+        <h3 style="margin: 0; color: var(--accent-color);">สารบัญ</h3>
         <div id="toc-list"></div>
     </div>
 
     <div id="settings-panel">
         <h3 style="margin: 0 0 15px 0; color: var(--accent-color);">ปรับแต่งการอ่าน</h3>
         <div class="setting-item">
-            <label>ชื่อฟอนต์ในเครื่อง (พิมชื่อฟอนต์):</label>
-            <input type="text" id="fontInput" placeholder="เช่น Sarabun, Cordia New" oninput="updateStyle()">
+            <label>ฟอนต์ (พิมพ์ชื่อที่มีในเครื่อง):</label>
+            <input type="text" id="fontInput" placeholder="เช่น Sarabun, Cordia New, Tahoma" oninput="updateStyle()">
         </div>
         <div class="setting-item">
             <label>ขนาดตัวอักษร: <span id="fontVal">20</span>px</label>
@@ -135,11 +123,10 @@
     </div>
 
     <div id="translate-panel">
-        <h3 style="margin:0 0 15px 0;">เลือกผู้ให้บริการแปล</h3>
-        <button class="btn" style="width:100%; border:1px solid #ddd; margin-bottom:10px;" onclick="window.open('https://www.deepl.com/translator', '_blank')">เปิด DeepL (แปลแม่นยำ)</button>
-        <p style="font-size:12px; margin-bottom:5px;">Google Translate (ในหน้าเว็บ):</p>
+        <h3 style="margin:0 0 15px 0; color: var(--accent-color);">เลือกภาษาที่ต้องการแปล</h3>
         <div id="google_translate_element"></div>
-        <button class="btn" style="width:100%; margin-top:15px;" onclick="closeAllPopups()">ปิด</button>
+        <p style="font-size:12px; color:#666; margin-top:15px;">*เลือกภาษาจากรายการด้านบน เนื้อหาในหน้าจะถูกแปลทันที</p>
+        <button class="btn btn-main" style="width:100%; margin-top:10px;" onclick="closeAllPopups()">ปิดหน้าต่างนี้</button>
     </div>
 
     <div id="reader-container">
@@ -155,7 +142,12 @@
 
     <script type="text/javascript">
         function googleTranslateElementInit() {
-            new google.translate.TranslateElement({pageLanguage: 'auto', includedLanguages: 'th,en,zh-CN', layout: google.translate.TranslateElement.InlineLayout.SIMPLE, autoDisplay: false}, 'google_translate_element');
+            new google.translate.TranslateElement({
+                pageLanguage: 'auto', 
+                includedLanguages: 'th,en,zh-CN,ja,ko', 
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE, 
+                autoDisplay: false
+            }, 'google_translate_element');
         }
     </script>
     <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
@@ -247,7 +239,7 @@
         }
 
         function hideNavs() {
-            if (document.querySelector('.overlay').style.display === 'block') return;
+            if (document.getElementById('overlay').style.display === 'block') return;
             document.getElementById('top-nav').classList.remove('show-nav');
             document.getElementById('bottom-nav').classList.remove('show-nav');
         }
