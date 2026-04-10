@@ -23,59 +23,74 @@
             padding-bottom: 70px;
             overflow-x: hidden;
             top: 0 !important;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        /* ปรับแต่งเมนูแปลภาษา */
-        #translate-panel {
+        /* ปรับแต่งแถบ Google Translate ให้ดูดีขึ้น */
+        #google_translate_element {
             position: fixed;
             top: 60px;
             left: 20px;
-            z-index: 1100;
+            z-index: 1001;
             background: white;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            display: none;
-            width: 220px;
-        }
-
-        .translate-option {
-            display: block;
-            width: 100%;
             padding: 10px;
-            margin: 5px 0;
-            text-align: left;
-            border: 1px solid #eee;
-            border-radius: 6px;
-            background: #fff;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.2s;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none; /* ซ่อนไว้ก่อน กดปุ่มแล้วค่อยโผล่ */
         }
-
-        .translate-option:hover { background: #f9f9f9; border-color: var(--accent-color); }
-
-        /* Google Translate Widget (Hidden by default) */
-        #google_translate_element { margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
 
         /* --- แถบบน (Auto-hide) --- */
         #top-nav {
-            position: fixed; top: 0; width: 100%; height: 50px; background: var(--nav-bg);
-            display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center;
-            padding: 0 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000;
-            box-sizing: border-box; transform: translateY(-100%); transition: transform 0.3s ease-in-out;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 50px;
+            background: var(--nav-bg);
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            box-sizing: border-box;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease-in-out;
         }
+
         #top-nav.show-nav { transform: translateY(0); }
-        #top-hover-trigger { position: fixed; top: 0; left: 0; width: 100%; height: 15px; z-index: 999; }
 
-        .top-center { justify-self: center; font-weight: bold; color: var(--accent-color); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+        #top-hover-trigger {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 15px; z-index: 999;
+        }
 
+        .top-left { justify-self: start; }
+        .top-center { 
+            justify-self: center; font-weight: bold; color: var(--accent-color);
+            text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .top-right { justify-self: end; display: flex; gap: 5px; }
+
+        /* --- ปุ่มแปลภาษาแบบลอย (เห็นตลอดเวลาในตอนแรกเพื่อให้กดง่าย) --- */
         #translate-toggle-btn {
-            position: fixed; top: 15px; left: 15px; z-index: 1100;
-            background: var(--accent-color); color: white; border: none;
-            padding: 8px 15px; border-radius: 20px; cursor: pointer;
-            font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1100;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        /* --- หน้าแรกและการเลือกไฟล์ --- */
+        .welcome-screen { text-align: center; padding: 50px 0; }
+        #fileInput {
+            margin-bottom: 20px; padding: 10px; border: 2px dashed var(--accent-color);
+            border-radius: 8px; background: #fff; cursor: pointer;
         }
 
         /* --- Reader Content --- */
@@ -84,9 +99,9 @@
             margin-top: 60px; padding: 40px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
             min-height: 85vh; box-sizing: border-box;
         }
-        #content { white-space: pre-wrap; word-wrap: break-word; font-size: 20px; line-height: 1.8; outline: none; }
+        #content { white-space: pre-wrap; word-wrap: break-word; font-size: 20px; line-height: 1.8; }
 
-        /* --- แถบล่าง --- */
+        /* --- แถบล่าง (Auto-hide) --- */
         #bottom-nav {
             position: fixed; bottom: 0; width: 100%; background: var(--nav-bg);
             border-top: 1px solid #ddd; z-index: 1000; height: 60px;
@@ -100,32 +115,22 @@
         .controls { display: flex; justify-content: center; align-items: center; padding: 5px 0; gap: 30px; }
         .btn { background: none; border: none; color: var(--accent-color); font-size: 15px; cursor: pointer; padding: 8px 15px; font-weight: 600; }
 
+        /* Settings Panel */
         #settings-panel {
             position: fixed; top: 60px; right: 20px; background: white;
             padding: 20px; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.2);
-            display: none; z-index: 1100; width: 280px;
+            display: none; z-index: 1100; width: 300px;
         }
-
-        .hint { font-size: 11px; color: #999; text-align: center; margin-top: 5px; }
 
         /* Clean up Google Translate UI */
         .goog-te-banner-frame.skiptranslate { display: none !important; }
+        body { top: 0px !important; }
         .skiptranslate iframe { display: none !important; }
     </style>
 </head>
-<body onkeydown="handleKeyboard(event)">
+<body>
 
-    <button id="translate-toggle-btn" onclick="toggleTranslateMenu()">🌐 ตัวเลือกการแปล</button>
-
-    <div id="translate-panel">
-        <strong style="font-size: 14px; color: var(--accent-color);">เลือกเครื่องมือแปล:</strong>
-        <button class="translate-option" onclick="useGoogleTranslate()">1. Google (ในหน้าเว็บ)</button>
-        <button class="translate-option" onclick="openExternalTranslate('bing')">2. Bing / Microsoft</button>
-        <button class="translate-option" onclick="openExternalTranslate('kagi')">3. Kagi Translate</button>
-        <button class="translate-option" onclick="openExternalTranslate('deepl')">4. DeepL (แม่นยำสูง)</button>
-        <div id="google_translate_element"></div>
-        <p style="font-size: 10px; color: #888; margin-top: 10px;">*แบบภายนอกจะเปิดหน้าต่างใหม่เพื่อวางข้อความ</p>
-    </div>
+    <button id="translate-toggle-btn" onclick="toggleTranslate()">🌐 แปลภาษา / เลือกภาษา</button>
 
     <div id="top-hover-trigger"></div>
     <div id="bottom-hover-trigger"></div>
@@ -138,22 +143,23 @@
         </div>
     </div>
 
+    <div id="google_translate_element"></div>
+
     <div id="settings-panel">
         <h3 style="margin: 0 0 15px 0; font-size: 18px; color: var(--accent-color);">ปรับแต่งการอ่าน</h3>
-        <div style="margin-bottom: 15px;">
+        <div class="setting-group">
             <label>ขนาดตัวอักษร: <span id="fontVal">20</span>px</label>
-            <input type="range" id="fontSizeRange" min="16" max="50" value="20" oninput="updateStyle()" style="width: 100%;">
+            <input type="range" id="fontSizeRange" min="16" max="50" value="20" oninput="updateStyle()">
         </div>
         <button class="btn" style="width:100%; background:var(--accent-color); color:white; border-radius:6px; padding: 10px;" onclick="toggleSettings()">เสร็จสิ้น</button>
     </div>
 
     <div id="reader-container">
-        <div id="content" tabindex="0">
-            <div class="welcome-screen" style="text-align: center; padding: 50px 0;">
-                <p style="font-size: 25px; margin-bottom: 10px;">Novel Reader</p>
-                <p>เลือกไฟล์ .txt เพื่อเริ่มอ่าน</p>
-                <input type="file" id="fileInput" accept=".txt" onchange="handleFile(event)" style="padding: 10px; border: 2px dashed var(--accent-color); border-radius: 8px;">
-                <p class="hint">ใช้ปุ่ม ⬅️ ➡️ บนคีย์บอร์ดเพื่อเปลี่ยนตอน</p>
+        <div id="content">
+            <div class="welcome-screen">
+                <p style="font-size: 25px;">Novel Reader</p>
+                <p>กรุณาเลือกไฟล์ .txt เพื่อเริ่มอ่าน</p>
+                <input type="file" id="fileInput" accept=".txt" onchange="handleFile(event)"> 
             </div>
         </div>
     </div>
@@ -162,8 +168,9 @@
         <div id="progress-info" style="font-size: 11px; text-align: center; color: #888; padding-top: 3px;">0%</div>
         <div class="progress-container"><div id="progress-bar"></div></div>
         <div class="controls">
-            <button class="btn" onclick="prevChapter()">ก่อนหน้า (⬅️)</button>
-            <button class="btn" onclick="nextChapter()">ถัดไป (➡️)</button>
+            <button class="btn" onclick="prevChapter()">ก่อนหน้า</button>
+            <button class="btn" onclick="toggleTOC()">สารบัญ</button>
+            <button class="btn" onclick="nextChapter()">ถัดไป</button>
         </div>
     </div>
 
@@ -171,7 +178,8 @@
         function googleTranslateElementInit() {
             new google.translate.TranslateElement({
                 pageLanguage: 'auto',
-                includedLanguages: 'th,en,zh-CN,ja,ko', 
+                // เปลี่ยนเป็นภาษาไทยเป็นหลัก หรือเลือกจากรายการ
+                includedLanguages: 'th,en,zh-CN,zh-TW,ja,ko', 
                 layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
                 autoDisplay: false
             }, 'google_translate_element');
@@ -184,45 +192,23 @@
         let currentIndex = 0;
         let navTimeout;
 
-        // --- ระบบแปลภาษา ---
-        function toggleTranslateMenu() {
-            const panel = document.getElementById('translate-panel');
-            panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'block' : 'none';
-        }
-
-        function useGoogleTranslate() {
-            // โชว์ Widget ของ Google ที่โหลดไว้
-            const gBox = document.getElementById('google_translate_element');
-            gBox.style.display = 'block';
-        }
-
-        function openExternalTranslate(engine) {
-            const text = document.getElementById('content').innerText.substring(0, 3000); // จำกัดความยาว
-            let url = "";
-            if(engine === 'bing') url = `https://www.bing.com/translator`;
-            if(engine === 'kagi') url = `https://kagi.com/translate`;
-            if(engine === 'deepl') url = `https://www.deepl.com/translator`;
-            
-            window.open(url, '_blank');
-            alert("คัดลอกข้อความในหน้าหลัก แล้วนำไปวางในหน้าต่างที่เปิดขึ้นมาใหม่");
-        }
-
-        // --- ระบบคีย์บอร์ด (แก้ปัญหาปุ่มบนแป้น) ---
-        function handleKeyboard(event) {
-            // ถอดรหัสปุ่ม
-            if (event.key === "ArrowRight") {
-                nextChapter();
-            } else if (event.key === "ArrowLeft") {
-                prevChapter();
+        function toggleTranslate() {
+            const el = document.getElementById('google_translate_element');
+            if (el.style.display === 'none' || el.style.display === '') {
+                el.style.display = 'block';
+            } else {
+                el.style.display = 'none';
             }
         }
 
-        // --- ระบบควบคุมเมนู ---
+        // --- ระบบซ่อนแถบเมนู ---
         function showNavs() {
             clearTimeout(navTimeout);
             document.getElementById('top-nav').classList.add('show-nav');
             document.getElementById('bottom-nav').classList.add('show-nav');
-            navTimeout = setTimeout(hideNavs, 4000);
+            if (document.getElementById('settings-panel').style.display !== 'block') {
+                navTimeout = setTimeout(hideNavs, 3000);
+            }
         }
 
         function hideNavs() {
@@ -236,25 +222,18 @@
         document.getElementById('top-hover-trigger').addEventListener('mouseenter', showNavs);
         document.getElementById('bottom-hover-trigger').addEventListener('mouseenter', showNavs);
 
-        // --- ระบบอ่านไฟล์และการจัดการตอน ---
         function handleFile(event) {
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
                 const text = e.target.result;
-                // Regex รองรับ บทที่... หรือ 第...章/节
+                // แยกบท (รองรับทั้งไทยและจีน)
                 const rawChapters = text.split(/(?=第[0-9一二三四五六七八九十百千]+[章节]|บทที่\s*\d+)/g);
-                
-                if (rawChapters.length <= 1) {
-                    // ถ้าแยกไม่ได้ ให้แบ่งตามบรรทัดว่างขนาดใหญ่แทน
-                    chapters = [{title: "Full Text", content: text}];
-                } else {
-                    chapters = rawChapters.map((content, i) => ({
-                        title: content.trim().split('\n')[0].substring(0, 30) || `บทที่ ${i+1}`,
-                        content: content.trim()
-                    }));
-                }
+                chapters = rawChapters.map((content, i) => ({
+                    title: content.trim().split('\n')[0].substring(0, 40) || `บทที่ ${i+1}`,
+                    content: content.trim()
+                }));
                 currentIndex = 0;
                 renderChapter();
             };
@@ -263,30 +242,16 @@
 
         function renderChapter() {
             if (chapters.length === 0) return;
-            const contentEl = document.getElementById('content');
-            contentEl.innerText = chapters[currentIndex].content;
+            document.getElementById('content').innerText = chapters[currentIndex].content;
             document.getElementById('current-chapter-title').innerText = chapters[currentIndex].title;
-            
             const percent = Math.round(((currentIndex + 1) / chapters.length) * 100);
             document.getElementById('progress-info').innerText = `ความคืบหน้า: ${percent}% (${currentIndex+1}/${chapters.length})`;
             document.getElementById('progress-bar').style.width = `${percent}%`;
-            
             window.scrollTo(0, 0);
-            showNavs(); // โชว์เมนูครู่หนึ่งเวลาเปลี่ยนบท
         }
 
-        function nextChapter() { 
-            if (currentIndex < chapters.length - 1) { 
-                currentIndex++; 
-                renderChapter(); 
-            } 
-        }
-        function prevChapter() { 
-            if (currentIndex > 0) { 
-                currentIndex--; 
-                renderChapter(); 
-            } 
-        }
+        function nextChapter() { if (currentIndex < chapters.length - 1) { currentIndex++; renderChapter(); } }
+        function prevChapter() { if (currentIndex > 0) { currentIndex--; renderChapter(); } }
 
         function toggleSettings() {
             const panel = document.getElementById('settings-panel');
