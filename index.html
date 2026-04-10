@@ -6,6 +6,7 @@
     <title>Premium Offline Novel Reader</title>
     <style>
         :root {
+            /* โทนสีถนอมสายตา */
             --bg-color: #f1ede4; 
             --paper-color: #fdfaf2;
             --text-color: #2d2926; 
@@ -13,7 +14,7 @@
             --nav-bg: rgba(253, 250, 242, 0.98);
         }
 
-        /* บังคับซ่อนแถบบาร์ Google ทุกชนิด */
+        /* บล็อกแถบ Banner สีฟ้าของ Google ไม่ให้โผล่มากวนใจ */
         .goog-te-banner-frame.skiptranslate, .goog-te-gadget-icon { display: none !important; }
         body { top: 0px !important; position: static !important; }
         .skiptranslate iframe { display: none !important; }
@@ -24,7 +25,7 @@
             padding-bottom: 80px; overflow-x: hidden; font-family: 'Sarabun', sans-serif;
         }
 
-        /* --- แถบควบคุม (Auto-hide) --- */
+        /* --- แถบควบคุม Auto-hide --- */
         #top-nav, #bottom-nav {
             position: fixed; width: 100%; background: var(--nav-bg);
             box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 1000;
@@ -55,8 +56,10 @@
         }
         .btn:hover { background: rgba(125, 90, 68, 0.1); border-color: var(--accent-color); }
         .btn-main { background: var(--accent-color) !important; color: white !important; }
+        .btn-reset { border: 1px solid #d9534f; color: #d9534f; margin-top: 10px; }
+        .btn-reset:hover { background: #d9534f; color: white; }
 
-        /* --- Popups --- */
+        /* --- Popup & Settings --- */
         #toc-popup, #settings-panel, #translate-panel {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: white; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
@@ -71,9 +74,7 @@
         .setting-item label { display: block; font-size: 13px; margin-bottom: 5px; font-weight: bold; }
         input[type="text"], input[type="range"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
 
-        /* ปรับแต่ง Dropdown Google ให้ดูเรียบง่าย */
-        #google_translate_element select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; font-family: sans-serif; }
-
+        #google_translate_element select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; }
         #progress-bar { height: 3px; background: var(--accent-color); width: 0%; transition: width 0.3s; }
     </style>
 </head>
@@ -109,7 +110,7 @@
         <h3 style="margin: 0 0 15px 0; color: var(--accent-color);">ปรับแต่งการอ่าน</h3>
         <div class="setting-item">
             <label>ฟอนต์ (พิมพ์ชื่อที่มีในเครื่อง):</label>
-            <input type="text" id="fontInput" placeholder="เช่น Sarabun, Cordia New, Tahoma" oninput="updateStyle()">
+            <input type="text" id="fontInput" placeholder="Sarabun, Tahoma, Microsoft YaHei" oninput="updateStyle()">
         </div>
         <div class="setting-item">
             <label>ขนาดตัวอักษร: <span id="fontVal">20</span>px</label>
@@ -123,19 +124,19 @@
     </div>
 
     <div id="translate-panel">
-        <h3 style="margin:0 0 15px 0; color: var(--accent-color);">เลือกภาษาที่ต้องการแปล</h3>
+        <h3 style="margin:0 0 15px 0; color: var(--accent-color);">เครื่องมือแปลภาษา</h3>
         <div id="google_translate_element"></div>
-        <p style="font-size:12px; color:#666; margin-top:15px;">*เลือกภาษาจากรายการด้านบน เนื้อหาในหน้าจะถูกแปลทันที</p>
-        <button class="btn btn-main" style="width:100%; margin-top:10px;" onclick="closeAllPopups()">ปิดหน้าต่างนี้</button>
+        
+        <button class="btn btn-reset" style="width:100%" onclick="restoreOriginal()">🔙 คืนค่าภาษาต้นฉบับ</button>
+        
+        <button class="btn btn-main" style="width:100%; margin-top:20px;" onclick="closeAllPopups()">ปิด</button>
     </div>
 
     <div id="reader-container">
         <div id="content">
             <div style="text-align: center; padding: 40px 0;">
-                <h2 style="color: var(--accent-color);">ยินดีต้อนรับ</h2>
-                <p>เลือกไฟล์ .txt เพื่อเริ่มอ่าน</p>
+                <h2 style="color: var(--accent-color);">Offline Reader</h2>
                 <input type="file" id="fileInput" accept=".txt" onchange="handleFile(event)">
-                <p style="font-size: 13px; color: #999; margin-top: 20px;">ใช้ปุ่ม ⬅️ ➡️ บนคีย์บอร์ดเพื่อเปลี่ยนหน้า</p>
             </div>
         </div>
     </div>
@@ -148,6 +149,23 @@
                 layout: google.translate.TranslateElement.InlineLayout.SIMPLE, 
                 autoDisplay: false
             }, 'google_translate_element');
+        }
+
+        // ฟังก์ชันสำหรับคืนค่าภาษาเดิม
+        function restoreOriginal() {
+            const iframe = document.querySelector('iframe.goog-te-menu-frame');
+            if (iframe) {
+                const restoreBtn = iframe.contentDocument.querySelector('.goog-te-menu2-item span.text:contains("Show original")') || 
+                                   iframe.contentDocument.querySelector('.goog-te-menu2-item-selected');
+                if (restoreBtn) restoreBtn.click();
+            }
+            // วิธีที่ชัวร์ที่สุดสำหรับเวอร์ชัน SIMPLE คือการเลือกภาษาต้นฉบับใน Dropdown หรือ Reset ผ่าน Cookie
+            const selectEl = document.querySelector('#google_translate_element select');
+            if (selectEl) {
+                selectEl.selectedIndex = 0; 
+                selectEl.dispatchEvent(new Event('change'));
+            }
+            location.reload(); // ในกรณีที่ Widget บล็อกการ Reset ทางโปรแกรม การ Reload คือทางออกที่สะอาดที่สุด
         }
     </script>
     <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
