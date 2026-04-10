@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -37,4 +37,188 @@
         /* --- Reader Content --- */
         #reader-container {
             width: 92%; max-width: 800px; background-color: var(--paper-color);
-            margin-top: 20px; padding:
+            margin-top: 20px; padding: 50px 40px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            min-height: 95vh; box-sizing: border-box; border-radius: 4px;
+        }
+        #content { white-space: pre-wrap; word-wrap: break-word; font-size: 20px; line-height: 1.8; outline: none; }
+
+        /* --- ปุ่มและการควบคุม --- */
+        .controls { display: flex; justify-content: center; align-items: center; padding: 10px 0; gap: 10px; }
+        .btn { 
+            background: none; border: 1px solid transparent; color: var(--accent-color); 
+            font-size: 15px; cursor: pointer; padding: 8px 15px; font-weight: 600;
+            border-radius: 6px; transition: 0.2s;
+        }
+        .btn:hover { background: rgba(125, 90, 68, 0.1); border-color: var(--accent-color); }
+        .btn-main { background: var(--accent-color) !important; color: white !important; }
+
+        /* --- Popups --- */
+        #toc-popup, #settings-panel {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: white; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            display: none; z-index: 2000; flex-direction: column; padding: 25px; width: 85%; max-width: 400px;
+        }
+        #toc-list { overflow-y: auto; max-height: 50vh; margin-top: 15px; border-top: 1px solid #eee; }
+        .toc-item { padding: 12px; border-bottom: 1px solid #f9f9f9; cursor: pointer; }
+        .toc-item:hover { background: #f5f5f5; color: var(--accent-color); }
+        
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; z-index: 1999; }
+        .setting-item { margin-bottom: 15px; }
+        .setting-item label { display: block; font-size: 13px; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="range"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
+
+        #progress-bar { height: 3px; background: var(--accent-color); width: 0%; transition: width 0.3s; }
+    </style>
+</head>
+<body onkeydown="handleKeyboard(event)">
+
+    <div id="top-hover-trigger"></div>
+    <div id="bottom-hover-trigger"></div>
+
+    <div id="top-nav">
+        <div></div> <div id="current-chapter-title" style="text-align:center; font-weight:bold; color:var(--accent-color);">Offline Reader</div>
+        <div style="text-align: right;"><button class="btn" onclick="togglePopup('settings-panel')">⚙️ ตั้งค่า</button></div>
+    </div>
+
+    <div id="bottom-nav">
+        <div id="progress-info" style="font-size: 11px; text-align: center; color: #888; padding: 4px 0;">0%</div>
+        <div style="width:100%; height:3px; background:#e0dbcf;"><div id="progress-bar"></div></div>
+        <div class="controls">
+            <button class="btn" onclick="prevChapter()">ถอยกลับ</button>
+            <button class="btn btn-main" onclick="togglePopup('toc-popup')">☰ สารบัญ</button>
+            <button class="btn" onclick="nextChapter()">หน้าถัดไป</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="closeAllPopups()"></div>
+
+    <div id="toc-popup">
+        <h3 style="margin: 0; color: var(--accent-color);">สารบัญ</h3>
+        <div id="toc-list"></div>
+    </div>
+
+    <div id="settings-panel">
+        <h3 style="margin: 0 0 15px 0; color: var(--accent-color);">ปรับแต่งการอ่าน</h3>
+        <div class="setting-item">
+            <label>ชื่อฟอนต์ (เช่น Sarabun, Cordia New):</label>
+            <input type="text" id="fontInput" placeholder="พิมพ์ชื่อฟอนต์ในเครื่อง" oninput="updateStyle()">
+        </div>
+        <div class="setting-item">
+            <label>ขนาดตัวอักษร: <span id="fontVal">20</span>px</label>
+            <input type="range" id="fontSizeRange" min="16" max="60" value="20" oninput="updateStyle()">
+        </div>
+        <div class="setting-item">
+            <label>ระยะห่างบรรทัด: <span id="lineHeightVal">1.8</span></label>
+            <input type="range" id="lineHeightRange" min="1.0" max="3.0" step="0.1" value="1.8" oninput="updateStyle()">
+        </div>
+        <button class="btn btn-main" style="width:100%" onclick="closeAllPopups()">ตกลง</button>
+    </div>
+
+    <div id="reader-container">
+        <div id="content">
+            <div style="text-align: center; padding: 40px 0;">
+                <h2 style="color: var(--accent-color);">ยินดีต้อนรับ</h2>
+                <p>เลือกไฟล์ .txt เพื่อเริ่มอ่าน</p>
+                <input type="file" id="fileInput" accept=".txt" onchange="handleFile(event)">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chapters = [];
+        let currentIndex = 0;
+        let navTimeout;
+
+        function handleFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const rawChapters = text.split(/(?=第[0-9一二三四五六七八九十百千]+[章节]|บทที่\s*\d+|Chapter\s*\d+)/g);
+                chapters = rawChapters.map((content, i) => ({
+                    title: content.trim().split('\n')[0].substring(0, 50) || `ตอนที่ ${i+1}`,
+                    content: content.trim()
+                }));
+                currentIndex = 0;
+                buildTOC();
+                renderChapter();
+            };
+            reader.readAsText(file);
+        }
+
+        function buildTOC() {
+            const list = document.getElementById('toc-list');
+            list.innerHTML = '';
+            chapters.forEach((ch, index) => {
+                const item = document.createElement('div');
+                item.className = 'toc-item';
+                item.innerText = ch.title;
+                item.onclick = () => { currentIndex = index; renderChapter(); closeAllPopups(); };
+                list.appendChild(item);
+            });
+        }
+
+        function renderChapter() {
+            if (chapters.length === 0) return;
+            document.getElementById('content').innerText = chapters[currentIndex].content;
+            document.getElementById('current-chapter-title').innerText = chapters[currentIndex].title;
+            const percent = Math.round(((currentIndex + 1) / chapters.length) * 100);
+            document.getElementById('progress-info').innerText = `${percent}% (${currentIndex+1}/${chapters.length})`;
+            document.getElementById('progress-bar').style.width = `${percent}%`;
+            window.scrollTo(0, 0);
+            showNavs();
+        }
+
+        function nextChapter() { if (currentIndex < chapters.length - 1) { currentIndex++; renderChapter(); } }
+        function prevChapter() { if (currentIndex > 0) { currentIndex--; renderChapter(); } }
+
+        function handleKeyboard(event) {
+            if (event.key === "ArrowRight") nextChapter();
+            if (event.key === "ArrowLeft") prevChapter();
+        }
+
+        function togglePopup(id) {
+            closeAllPopups();
+            document.getElementById(id).style.display = 'flex';
+            document.getElementById('overlay').style.display = 'block';
+        }
+
+        function closeAllPopups() {
+            ['toc-popup', 'settings-panel'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.style.display = 'none';
+            });
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        function updateStyle() {
+            const fontName = document.getElementById('fontInput').value;
+            const fSize = document.getElementById('fontSizeRange').value;
+            const lHeight = document.getElementById('lineHeightRange').value;
+            document.getElementById('fontVal').innerText = fSize;
+            document.getElementById('lineHeightVal').innerText = lHeight;
+            const content = document.getElementById('content');
+            if(fontName) content.style.fontFamily = fontName;
+            content.style.fontSize = fSize + 'px';
+            content.style.lineHeight = lHeight;
+        }
+
+        function showNavs() {
+            clearTimeout(navTimeout);
+            document.getElementById('top-nav').classList.add('show-nav');
+            document.getElementById('bottom-nav').classList.add('show-nav');
+            navTimeout = setTimeout(hideNavs, 4000);
+        }
+
+        function hideNavs() {
+            if (document.getElementById('overlay').style.display === 'block') return;
+            document.getElementById('top-nav').classList.remove('show-nav');
+            document.getElementById('bottom-nav').classList.remove('show-nav');
+        }
+
+        document.getElementById('top-hover-trigger').addEventListener('mouseenter', showNavs);
+        document.getElementById('bottom-hover-trigger').addEventListener('mouseenter', showNavs);
+    </script>
+</body>
+</html>
