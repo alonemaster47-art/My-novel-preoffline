@@ -6,7 +6,6 @@
     <title>Premium Offline Novel Reader</title>
     <style>
         :root {
-            /* โทนสีถนอมสายตา */
             --bg-color: #f1ede4; 
             --paper-color: #fdfaf2;
             --text-color: #2d2926; 
@@ -14,7 +13,7 @@
             --nav-bg: rgba(253, 250, 242, 0.98);
         }
 
-        /* บล็อกแถบ Banner สีฟ้าของ Google ไม่ให้โผล่มากวนใจ */
+        /* บล็อกแถบบาร์ Google สีฟ้าไม่ให้โผล่มากวนใจ */
         .goog-te-banner-frame.skiptranslate, .goog-te-gadget-icon { display: none !important; }
         body { top: 0px !important; position: static !important; }
         .skiptranslate iframe { display: none !important; }
@@ -56,10 +55,15 @@
         }
         .btn:hover { background: rgba(125, 90, 68, 0.1); border-color: var(--accent-color); }
         .btn-main { background: var(--accent-color) !important; color: white !important; }
-        .btn-reset { border: 1px solid #d9534f; color: #d9534f; margin-top: 10px; }
-        .btn-reset:hover { background: #d9534f; color: white; }
+        
+        /* ปุ่มคืนค่าภาษาเดิม สีแดงเพื่อความชัดเจน */
+        .btn-reset { 
+            border: 1px solid #c9302c; color: #c9302c; margin-top: 15px; 
+            background: white; width: 100%; padding: 10px;
+        }
+        .btn-reset:hover { background: #c9302c; color: white; }
 
-        /* --- Popup & Settings --- */
+        /* --- Popups --- */
         #toc-popup, #settings-panel, #translate-panel {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: white; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
@@ -70,10 +74,7 @@
         .toc-item:hover { background: #f5f5f5; color: var(--accent-color); }
         
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; z-index: 1999; }
-        .setting-item { margin-bottom: 15px; }
-        .setting-item label { display: block; font-size: 13px; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="range"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
-
+        
         #google_translate_element select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; }
         #progress-bar { height: 3px; background: var(--accent-color); width: 0%; transition: width 0.3s; }
     </style>
@@ -108,28 +109,20 @@
 
     <div id="settings-panel">
         <h3 style="margin: 0 0 15px 0; color: var(--accent-color);">ปรับแต่งการอ่าน</h3>
-        <div class="setting-item">
-            <label>ฟอนต์ (พิมพ์ชื่อที่มีในเครื่อง):</label>
-            <input type="text" id="fontInput" placeholder="Sarabun, Tahoma, Microsoft YaHei" oninput="updateStyle()">
+        <div style="margin-bottom:15px">
+            <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:5px;">ขนาดตัวอักษร: <span id="fontVal">20</span>px</label>
+            <input type="range" id="fontSizeRange" min="16" max="60" value="20" oninput="updateStyle()" style="width:100%">
         </div>
-        <div class="setting-item">
-            <label>ขนาดตัวอักษร: <span id="fontVal">20</span>px</label>
-            <input type="range" id="fontSizeRange" min="16" max="60" value="20" oninput="updateStyle()">
-        </div>
-        <div class="setting-item">
-            <label>ระยะห่างบรรทัด: <span id="lineHeightVal">1.8</span></label>
-            <input type="range" id="lineHeightRange" min="1.0" max="3.0" step="0.1" value="1.8" oninput="updateStyle()">
-        </div>
-        <button class="btn btn-main" style="width:100%" onclick="closeAllPopups()">ตกลง</button>
+        <button class="btn btn-main" style="width:100%" onclick="closeAllPopups()">เสร็จสิ้น</button>
     </div>
 
     <div id="translate-panel">
-        <h3 style="margin:0 0 15px 0; color: var(--accent-color);">เครื่องมือแปลภาษา</h3>
+        <h3 style="margin:0 0 15px 0; color: var(--accent-color);">เลือกภาษา</h3>
         <div id="google_translate_element"></div>
         
-        <button class="btn btn-reset" style="width:100%" onclick="restoreOriginal()">🔙 คืนค่าภาษาต้นฉบับ</button>
+        <button class="btn btn-reset" onclick="resetTranslation()">🔙 คืนค่าภาษาต้นฉบับ</button>
         
-        <button class="btn btn-main" style="width:100%; margin-top:20px;" onclick="closeAllPopups()">ปิด</button>
+        <button class="btn btn-main" style="width:100%; margin-top:15px;" onclick="closeAllPopups()">ปิดหน้าต่างนี้</button>
     </div>
 
     <div id="reader-container">
@@ -151,21 +144,26 @@
             }, 'google_translate_element');
         }
 
-        // ฟังก์ชันสำหรับคืนค่าภาษาเดิม
-        function restoreOriginal() {
+        // ฟังก์ชันพิเศษสำหรับคืนค่าภาษาต้นฉบับ
+        function resetTranslation() {
+            // ค้นหาและคลิกปุ่ม 'Show Original' ใน iframe ของ Google
             const iframe = document.querySelector('iframe.goog-te-menu-frame');
             if (iframe) {
                 const restoreBtn = iframe.contentDocument.querySelector('.goog-te-menu2-item span.text:contains("Show original")') || 
                                    iframe.contentDocument.querySelector('.goog-te-menu2-item-selected');
                 if (restoreBtn) restoreBtn.click();
             }
-            // วิธีที่ชัวร์ที่สุดสำหรับเวอร์ชัน SIMPLE คือการเลือกภาษาต้นฉบับใน Dropdown หรือ Reset ผ่าน Cookie
-            const selectEl = document.querySelector('#google_translate_element select');
-            if (selectEl) {
-                selectEl.selectedIndex = 0; 
-                selectEl.dispatchEvent(new Event('change'));
+            
+            // รีเซ็ตค่าใน Select และปิดหน้าจอแปล
+            const select = document.querySelector('#google_translate_element select');
+            if (select) {
+                select.selectedIndex = 0;
+                select.dispatchEvent(new Event('change'));
             }
-            location.reload(); // ในกรณีที่ Widget บล็อกการ Reset ทางโปรแกรม การ Reload คือทางออกที่สะอาดที่สุด
+            
+            // เพื่อความชัวร์ที่สุด ให้ล้างคุกกี้การแปลและรีโหลดหน้า
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            location.reload(); 
         }
     </script>
     <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
@@ -238,15 +236,9 @@
         }
 
         function updateStyle() {
-            const fontName = document.getElementById('fontInput').value;
             const fSize = document.getElementById('fontSizeRange').value;
-            const lHeight = document.getElementById('lineHeightRange').value;
             document.getElementById('fontVal').innerText = fSize;
-            document.getElementById('lineHeightVal').innerText = lHeight;
-            const content = document.getElementById('content');
-            if(fontName) content.style.fontFamily = fontName;
-            content.style.fontSize = fSize + 'px';
-            content.style.lineHeight = lHeight;
+            document.getElementById('content').style.fontSize = fSize + 'px';
         }
 
         function showNavs() {
