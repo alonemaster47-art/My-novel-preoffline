@@ -139,7 +139,8 @@
                 chapters = rawChapters.map((content, i) => ({
                     title: content.trim().split('\n')[0].substring(0, 50) || `ตอนที่ ${i+1}`,
                     content: content.trim()
-                }));
+                })).filter(ch => ch.content.length > 0);
+                
                 currentIndex = 0;
                 buildTOC();
                 renderChapter();
@@ -161,17 +162,52 @@
 
         function renderChapter() {
             if (chapters.length === 0) return;
-            document.getElementById('content').innerText = chapters[currentIndex].content;
-            document.getElementById('current-chapter-title').innerText = chapters[currentIndex].title;
+            
+            const contentDiv = document.getElementById('content');
+            const titleDiv = document.getElementById('current-chapter-title');
+            
+            // รวมเนื้อหา 2 บท (บทปัจจุบัน + บทถัดไปถ้ามี)
+            let combinedContent = chapters[currentIndex].content;
+            let displayTitle = chapters[currentIndex].title;
+            
+            if (currentIndex + 1 < chapters.length) {
+                combinedContent += "\n\n----------------------------------\n\n" + chapters[currentIndex + 1].content;
+                displayTitle += " & " + chapters[currentIndex + 1].title;
+            }
+
+            contentDiv.innerText = combinedContent;
+            titleDiv.innerText = displayTitle;
+
+            // คำนวณความคืบหน้า
             const percent = Math.round(((currentIndex + 1) / chapters.length) * 100);
-            document.getElementById('progress-info').innerText = `${percent}% (${currentIndex+1}/${chapters.length})`;
+            document.getElementById('progress-info').innerText = `${percent}% (บทที่ ${currentIndex+1}/${chapters.length})`;
             document.getElementById('progress-bar').style.width = `${percent}%`;
+            
             window.scrollTo(0, 0);
             showNavs();
         }
 
-        function nextChapter() { if (currentIndex < chapters.length - 1) { currentIndex++; renderChapter(); } }
-        function prevChapter() { if (currentIndex > 0) { currentIndex--; renderChapter(); } }
+        // ฟังก์ชันเลื่อนหน้าทีละ 2 บท
+        function nextChapter() { 
+            if (currentIndex + 2 < chapters.length) { 
+                currentIndex += 2; 
+                renderChapter(); 
+            } else if (currentIndex + 1 < chapters.length) {
+                // กรณีอยู่บทก่อนสุดท้าย ให้ขยับไปบทสุดท้ายบทเดียว
+                currentIndex++;
+                renderChapter();
+            }
+        }
+
+        function prevChapter() { 
+            if (currentIndex - 2 >= 0) { 
+                currentIndex -= 2; 
+                renderChapter(); 
+            } else {
+                currentIndex = 0;
+                renderChapter();
+            }
+        }
 
         function handleKeyboard(event) {
             if (event.key === "ArrowRight") nextChapter();
