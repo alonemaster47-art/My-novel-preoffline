@@ -3,86 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Web Novel Reader</title>
+    <title>Novel Reader - Session Mode</title>
     <style>
-        :root {
-            --bg-color: #f4f1ea; /* สีถนอมสายตา */
-            --text-color: #2c3e50;
-            --font-size: 20px;
+        :root { --bg-color: #f4f1ea; --text-color: #2c3e50; }
+        body { background-color: var(--bg-color); color: var(--text-color); font-family: 'Segoe UI', sans-serif; line-height: 1.8; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        
+        #controls { position: fixed; top: 0; width: 100%; background: #fff; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: center; gap: 10px; z-index: 100; flex-wrap: wrap; }
+        
+        #reader-container { max-width: 800px; width: 90%; margin-top: 130px; margin-bottom: 50px; padding: 30px; background: white; min-height: 80vh; }
+
+        p { margin-bottom: 1.5em; text-indent: 2em; cursor: help; }
+        p:hover { background: #fdfae1; }
+
+        #edit-modal { 
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            display: none; z-index: 1000; width: 300px;
         }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 2;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* ส่วนควบคุม */
-        #controls {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background: #fff;
-            padding: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            z-index: 100;
-        }
-
-        /* พื้นที่เนื้อหา */
-        #reader-container {
-            max-width: 800px;
-            width: 90%;
-            margin-top: 80px;
-            margin-bottom: 50px;
-            padding: 20px;
-            background: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.05);
-            min-height: 80vh;
-        }
-
-        h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        p { margin-bottom: 1.5em; text-indent: 2em; }
-
-        /* สารบัญ (Modal) */
-        #toc-menu {
-            position: fixed;
-            right: 20px;
-            top: 70px;
-            background: white;
-            border: 1px solid #ccc;
-            max-height: 70vh;
-            overflow-y: auto;
-            width: 250px;
-            display: none;
-            padding: 10px;
-            box-shadow: -2px 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .toc-item { 
-            cursor: pointer; 
-            padding: 5px; 
-            border-bottom: 1px solid #eee; 
-        }
-        .toc-item:hover { background: #f0f0f0; }
-
-        button {
-            padding: 8px 15px;
-            cursor: pointer;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            background: #fff;
-        }
-
-        button:hover { background: #eee; }
+        #toc-menu { position: fixed; right: 20px; top: 130px; background: white; border: 1px solid #ccc; max-height: 60vh; overflow-y: auto; width: 250px; display: none; padding: 10px; box-shadow: -2px 2px 10px rgba(0,0,0,0.1); z-index: 99; }
+        
+        .toc-item { cursor: pointer; padding: 8px; border-bottom: 1px solid #eee; }
+        button { padding: 8px 15px; cursor: pointer; border-radius: 5px; border: 1px solid #ddd; background: #fff; }
+        .danger-btn { background: #fff5f5; color: #c0392b; border-color: #fb8c8c; }
+        .danger-btn:hover { background: #fee2e2; }
     </style>
 </head>
 <body>
@@ -92,84 +36,114 @@
     <button onclick="toggleTOC()">📖 สารบัญ</button>
     <button onclick="changeChapter(-1)">ก่อนหน้า</button>
     <button onclick="changeChapter(1)">ถัดไป</button>
+    <button class="danger-btn" onclick="clearDictionary()">🗑️ ล้างคำศัพท์ที่แก้</button>
+</div>
+
+<div id="edit-modal">
+    <h4>แก้ไขคำศัพท์ (ชั่วคราว)</h4>
+    <input type="text" id="originalWord" readonly style="width: 100%; margin-bottom: 10px;">
+    <input type="text" id="replaceWith" placeholder="เปลี่ยนเป็น..." style="width: 100%; margin-bottom: 15px;">
+    <div style="display: flex; gap: 10px;">
+        <button onclick="saveWord()">ตกลง</button>
+        <button onclick="closeModal()">ยกเลิก</button>
+    </div>
 </div>
 
 <div id="toc-menu"></div>
 
 <div id="reader-container">
     <div id="content-display">
-        <h1 style="text-align: center;">กรุณาเลือกไฟล์นิยาย (.txt)</h1>
-        <p style="text-align: center;">ระบบจะแบ่งบทโดยหาจากคำว่า "Chapter", "บทที่" หรือการเว้นบรรทัดยาวๆ</p>
+        <h2 style="text-align: center;">เปิดไฟล์เพื่อเริ่มอ่าน</h2>
     </div>
 </div>
 
 <script>
-    let chapters = [];
+    let rawChapters = []; 
     let currentChapterIndex = 0;
+    // เปลี่ยนจาก localStorage เป็นตัวแปรธรรมดา ข้อมูลจะหายเมื่อปิดหน้าเว็บ
+    let customDict = {}; 
 
     document.getElementById('fileInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
         const reader = new FileReader();
-        reader.onload = function(content) {
+        reader.onload = (content) => {
             const text = content.target.result;
-            processText(text);
+            const chapterRegex = /(?=Chapter|บทที่|\n{3,})/i;
+            rawChapters = text.split(chapterRegex).filter(c => c.trim().length > 0);
+            
+            // ล้างพจนานุกรมทุกครั้งที่เลือกไฟล์ใหม่ (เลือกได้ว่าจะเอาออกไหม)
+            // customDict = {}; 
+            
+            buildTOC();
+            renderChapter(0);
         };
-        reader.readAsText(file);
+        reader.readAsText(e.target.files[0]);
     });
 
-    function processText(text) {
-        // Regex สำหรับแบ่งบท (รองรับ Chapter, บทที่, หรือบรรทัดว่างหลายบรรทัด)
-        const chapterRegex = /(?=Chapter|บทที่|\n{3,})/i;
-        chapters = text.split(chapterRegex).filter(c => c.trim().length > 0);
-        
-        buildTOC();
-        renderChapter(0);
-    }
-
-    function buildTOC() {
-        const toc = document.getElementById('toc-menu');
-        toc.innerHTML = '<h3>รายชื่อบท</h3>';
-        chapters.forEach((ch, index) => {
-            const title = ch.substring(0, 30).trim() + "...";
-            const div = document.createElement('div');
-            div.className = 'toc-item';
-            div.innerText = `บทที่ ${index + 1}: ${title}`;
-            div.onclick = () => {
-                renderChapter(index);
-                toggleTOC();
-            };
-            toc.appendChild(div);
-        });
-    }
-
     function renderChapter(index) {
-        if (index < 0 || index >= chapters.length) return;
+        if (index < 0 || index >= rawChapters.length) return;
         currentChapterIndex = index;
-        
         const display = document.getElementById('content-display');
-        const text = chapters[index].trim();
         
-        // แปลงบรรทัดใหม่เป็น <p> tag เพื่อให้ Browser Extension ตรวจจับและแปลได้ง่าย
-        const formattedText = text.split('\n').map(line => {
-            if(line.trim()) return `<p>${line.trim()}</p>`;
-            return "";
+        let content = rawChapters[index].trim();
+        
+        // แทนที่คำตามพจนานุกรมชั่วคราว
+        for (const [oldWord, newWord] of Object.entries(customDict)) {
+            const regex = new RegExp(escapeRegExp(oldWord), 'g');
+            content = content.replace(regex, newWord);
+        }
+
+        const lines = content.split('\n').map(line => {
+            if(!line.trim()) return "";
+            return `<p onclick="handleParaClick(event)">${line.trim()}</p>`;
         }).join('');
 
-        display.innerHTML = `<h2>Chapter ${index + 1}</h2>` + formattedText;
+        display.innerHTML = `<h2>บทที่ ${index + 1}</h2>` + lines;
         window.scrollTo(0,0);
     }
 
-    function changeChapter(step) {
-        renderChapter(currentChapterIndex + step);
+    function handleParaClick(e) {
+        const selectedText = window.getSelection().toString().trim();
+        if (selectedText) {
+            document.getElementById('originalWord').value = selectedText;
+            document.getElementById('replaceWith').value = customDict[selectedText] || selectedText;
+            document.getElementById('edit-modal').style.display = 'block';
+        }
     }
 
-    function toggleTOC() {
+    function saveWord() {
+        const oldW = document.getElementById('originalWord').value;
+        const newW = document.getElementById('replaceWith').value;
+        if (oldW) {
+            customDict[oldW] = newW;
+            closeModal();
+            renderChapter(currentChapterIndex);
+        }
+    }
+
+    function clearDictionary() {
+        if(confirm("ล้างการแก้ไขคำศัพท์ทั้งหมดในรอบการอ่านนี้?")) {
+            customDict = {};
+            renderChapter(currentChapterIndex);
+        }
+    }
+
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function closeModal() { document.getElementById('edit-modal').style.display = 'none'; }
+    function toggleTOC() { const m = document.getElementById('toc-menu'); m.style.display = m.style.display === 'block' ? 'none' : 'block'; }
+    function changeChapter(step) { renderChapter(currentChapterIndex + step); }
+    function buildTOC() {
         const toc = document.getElementById('toc-menu');
-        toc.style.display = toc.style.display === 'block' ? 'none' : 'block';
+        toc.innerHTML = '<h3>รายชื่อบท</h3>';
+        rawChapters.forEach((_, i) => {
+            const d = document.createElement('div');
+            d.className = 'toc-item'; d.innerText = `บทที่ ${i + 1}`;
+            d.onclick = () => { renderChapter(i); toggleTOC(); };
+            toc.appendChild(d);
+        });
     }
 </script>
-
 </body>
 </html>
