@@ -7,15 +7,30 @@
     <style>
         :root { --bg-color: #f4f1ea; --text-color: #2c3e50; }
         body { background-color: var(--bg-color); color: var(--text-color); font-family: 'Segoe UI', Tahoma, 'PingFang SC', 'Microsoft YaHei', sans-serif; line-height: 1.8; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        
         #controls { position: fixed; top: 0; width: 100%; background: #fff; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: center; gap: 10px; z-index: 100; flex-wrap: wrap; }
+        
         #reader-container { max-width: 800px; width: 90%; margin-top: 130px; margin-bottom: 50px; padding: 30px; background: white; min-height: 80vh; }
+        
         p { margin-bottom: 1.5em; text-indent: 2em; cursor: help; font-size: 1.1em; }
         p:hover { background: #fdfae1; }
-        #edit-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.3); display: none; z-index: 1000; width: 300px; }
+        
+        /* Modal Styles */
+        .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.3); display: none; z-index: 1000; width: 320px; }
+        
+        /* Dictionary List Style */
+        #dict-modal { width: 450px; max-height: 70vh; overflow-y: auto; }
+        .dict-item { display: flex; align-items: center; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; gap: 5px; }
+        .dict-item input { padding: 4px; border: 1px solid #ddd; border-radius: 4px; width: 110px; }
+        
         #toc-menu { position: fixed; right: 20px; top: 130px; background: white; border: 1px solid #ccc; max-height: 60vh; overflow-y: auto; width: 250px; display: none; padding: 10px; box-shadow: -2px 2px 10px rgba(0,0,0,0.1); z-index: 99; }
+        
         .toc-item { cursor: pointer; padding: 8px; border-bottom: 1px solid #eee; font-size: 0.9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        button { padding: 8px 15px; cursor: pointer; border-radius: 5px; border: 1px solid #ddd; background: #fff; }
+        
+        button { padding: 8px 15px; cursor: pointer; border-radius: 5px; border: 1px solid #ddd; background: #fff; transition: 0.2s; }
+        button:hover { background: #f0f0f0; }
         .danger-btn { background: #fff5f5; color: #c0392b; border-color: #fb8c8c; }
+        .primary-btn { background: #e3f2fd; border-color: #90caf9; color: #1976d2; }
     </style>
 </head>
 <body>
@@ -25,16 +40,28 @@
     <button onclick="toggleTOC()">📖 สารบัญ</button>
     <button onclick="changeChapter(-1)">ก่อนหน้า</button>
     <button onclick="changeChapter(1)">ถัดไป</button>
-    <button class="danger-btn" onclick="clearDictionary()">🗑️ ล้างคำศัพท์</button>
+    <button class="primary-btn" onclick="openDictModal()">🗂️ คลังคำศัพท์</button>
+    <button class="danger-btn" onclick="clearDictionary()">🗑️ ล้างทั้งหมด</button>
 </div>
 
-<div id="edit-modal">
+<div id="edit-modal" class="modal">
     <h4>แก้ไขคำศัพท์ (ชั่วคราว)</h4>
-    <input type="text" id="originalWord" readonly style="width: 100%; margin-bottom: 10px;">
+    <label style="font-size: 0.8em;">คำต้นฉบับ:</label>
+    <input type="text" id="originalWord" readonly style="width: 100%; margin-bottom: 10px; background: #f9f9f9;">
+    <label style="font-size: 0.8em;">เปลี่ยนเป็น:</label>
     <input type="text" id="replaceWith" placeholder="เปลี่ยนเป็น..." style="width: 100%; margin-bottom: 15px;">
     <div style="display: flex; gap: 10px;">
-        <button onclick="saveWord()">ตกลง</button>
-        <button onclick="closeModal()">ยกเลิก</button>
+        <button onclick="saveWord()" style="flex: 1; background: #2ecc71; color: white;">ตกลง</button>
+        <button onclick="closeModal('edit-modal')" style="flex: 1;">ยกเลิก</button>
+    </div>
+</div>
+
+<div id="dict-modal" class="modal">
+    <h3 style="margin-top: 0;">🗂️ คลังคำศัพท์ที่แก้ไขแล้ว</h3>
+    <div id="dict-list-container" style="margin-bottom: 15px;">
+        </div>
+    <div style="text-align: right;">
+        <button onclick="closeModal('dict-modal')">ปิดหน้าต่าง</button>
     </div>
 </div>
 
@@ -56,17 +83,10 @@
         const reader = new FileReader();
         reader.onload = (content) => {
             const text = content.target.result;
-            
-            // Regex ตัวนี้จะดักจับ:
-            // 1. Chapter หรือ บทที่
-            // 2. รูปแบบภาษาจีน 第...章, 第...回, 第...节
-            // 3. บรรทัดที่มีตัวอักษรไม่เกิน 20 ตัวแล้วตามด้วยการเว้นบรรทัด (มักจะเป็นชื่อบท)
             const chapterRegex = /(?=Chapter|บทที่|第[0-9一二三四五六七八九十百千]+[章节回]|\n{2,}(?=[^\n]{1,20}\n))/i;
-            
             rawChapters = text.split(chapterRegex).filter(c => c.trim().length > 10);
             
             if (rawChapters.length <= 1) {
-                // ถ้าแยกไม่ได้เลย ให้ลองแยกด้วยการเว้นบรรทัดห่างๆ แทน
                 rawChapters = text.split(/\n{3,}/).filter(c => c.trim().length > 0);
             }
 
@@ -83,9 +103,12 @@
         
         let content = rawChapters[index].trim();
         
-        for (const [oldWord, newWord] of Object.entries(customDict)) {
+        // กรองคำศัพท์: เรียงลำดับจากยาวไปสั้น เพื่อป้องกันการทับซ้อนของคำ
+        const sortedKeys = Object.keys(customDict).sort((a, b) => b.length - a.length);
+        
+        for (const oldWord of sortedKeys) {
             const regex = new RegExp(escapeRegExp(oldWord), 'g');
-            content = content.replace(regex, newWord);
+            content = content.replace(regex, customDict[oldWord]);
         }
 
         const lines = content.split('\n').map(line => {
@@ -111,15 +134,55 @@
         const newW = document.getElementById('replaceWith').value;
         if (oldW) {
             customDict[oldW] = newW;
-            closeModal();
+            closeModal('edit-modal');
             renderChapter(currentChapterIndex);
         }
     }
 
+    // ฟังก์ชันจัดการคลังคำศัพท์
+    function openDictModal() {
+        const container = document.getElementById('dict-list-container');
+        container.innerHTML = '';
+        const keys = Object.keys(customDict);
+
+        if (keys.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:gray;">ยังไม่มีการแก้ไขคำศัพท์</p>';
+        } else {
+            keys.forEach(oldWord => {
+                const div = document.createElement('div');
+                div.className = 'dict-item';
+                div.innerHTML = `
+                    <span style="font-size:0.9em; flex:1; overflow:hidden;"><b>${oldWord}</b></span>
+                    <span>➡️</span>
+                    <input type="text" value="${customDict[oldWord]}" onchange="updateDictWord('${oldWord}', this.value)">
+                    <button class="danger-btn" onclick="deleteDictWord('${oldWord}')" style="padding:2px 8px;">✕</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+        document.getElementById('dict-modal').style.display = 'block';
+    }
+
+    function updateDictWord(oldWord, newValue) {
+        if (newValue.trim() === "") {
+            deleteDictWord(oldWord);
+        } else {
+            customDict[oldWord] = newValue;
+            renderChapter(currentChapterIndex);
+        }
+    }
+
+    function deleteDictWord(oldWord) {
+        delete customDict[oldWord];
+        openDictModal(); // refresh list
+        renderChapter(currentChapterIndex);
+    }
+
     function clearDictionary() {
-        if(confirm("ล้างการแก้ไขคำศัพท์ทั้งหมด?")) {
+        if(confirm("ล้างการแก้ไขคำศัพท์ทั้งหมดหรือไม่?")) {
             customDict = {};
             renderChapter(currentChapterIndex);
+            if(document.getElementById('dict-modal').style.display === 'block') openDictModal();
         }
     }
 
@@ -127,8 +190,13 @@
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
-    function closeModal() { document.getElementById('edit-modal').style.display = 'none'; }
-    function toggleTOC() { const m = document.getElementById('toc-menu'); m.style.display = m.style.display === 'block' ? 'none' : 'block'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    
+    function toggleTOC() { 
+        const m = document.getElementById('toc-menu'); 
+        m.style.display = m.style.display === 'block' ? 'none' : 'block'; 
+    }
+
     function changeChapter(step) { renderChapter(currentChapterIndex + step); }
     
     function buildTOC() {
