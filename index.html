@@ -3,57 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Language Novel Reader (Full Restore)</title>
+    <title>Multi-Language Novel Reader (Fix Keyboard & Edit Dict)</title>
     <style>
-        :root { --bg-color: #f4f1ea; --text-color: #2c3e50; }
-        body { background-color: var(--bg-color); color: var(--text-color); font-family: 'Segoe UI', Tahoma, 'Noto Sans Thai','PingFang SC', sans-serif; line-height: 1.8; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        #controls { position: fixed; top: 0; width: 100%; background: #fff; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: center; gap: 10px; z-index: 100; flex-wrap: wrap; }
-        #reader-container { max-width: 800px; width: 90%; margin-top: 130px; margin-bottom: 50px; padding: 30px; background: white; min-height: 80vh; }
-        p { margin-bottom: 1.5em; text-indent: 2em; cursor: help; font-size: 1.1em; }
-        p:hover { background: #fdfae1; }
-        .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.3); display: none; z-index: 1000; width: 320px; }
-        #dict-modal { width: 450px; max-height: 70vh; overflow-y: auto; }
-        .dict-item { display: flex; align-items: center; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; gap: 5px; }
-        .dict-item input { padding: 4px; border: 1px solid #ddd; border-radius: 4px; width: 110px; }
-        #toc-menu { position: fixed; right: 20px; top: 130px; background: white; border: 1px solid #ccc; max-height: 60vh; overflow-y: auto; width: 250px; display: none; padding: 10px; box-shadow: -2px 2px 10px rgba(0,0,0,0.1); z-index: 99; scroll-behavior: smooth; }
-        .toc-item { cursor: pointer; padding: 8px; border-bottom: 1px solid #eee; font-size: 0.9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .toc-item.active { background-color: #e3f2fd; font-weight: bold; border-left: 4px solid #1976d2; }
-        button { padding: 8px 15px; cursor: pointer; border-radius: 5px; border: 1px solid #ddd; background: #fff; transition: 0.2s; }
-        button:hover { background: #f0f0f0; }
+        :root { 
+            --bg-color: #f4f1ea; 
+            --text-color: #2c3e50; 
+            --content-font-size: 20px;
+            --content-line-height: 1.8;
+        }
+        
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-color); 
+            font-family: "Times New Roman", "Noto Sans Thai", serif; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+
+        #controls { 
+            position: fixed; top: 0; width: 100%; background: #fff; 
+            padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            display: flex; justify-content: center; gap: 10px; 
+            z-index: 100; flex-wrap: wrap; font-family: "Noto Sans Thai", sans-serif;
+        }
+
+        .settings-bar {
+            display: flex; align-items: center; gap: 15px;
+            background: #f9f9f9; padding: 5px 15px; border-radius: 8px;
+            border: 1px solid #eee; font-size: 14px;
+        }
+
+        .settings-bar input { width: 50px; padding: 3px; border-radius: 4px; border: 1px solid #ccc; }
+
+        #reader-container { 
+            max-width: 800px; width: 90%; margin-top: 140px; margin-bottom: 50px; 
+            padding: 40px; background: white; min-height: 80vh; 
+            border-radius: 4px; box-shadow: 0 0 15px rgba(0,0,0,0.05);
+        }
+
+        #content-display p { 
+            margin-bottom: 1.5em; text-indent: 2em; cursor: help; 
+            font-size: var(--content-font-size); line-height: var(--content-line-height);
+            transition: background 0.2s; 
+        }
+        #content-display p:hover { background: #fdfae1; }
+
+        .modal { 
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            background: white; padding: 20px; border-radius: 12px; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.3); display: none; 
+            z-index: 1000; width: 350px; font-family: "Noto Sans Thai", sans-serif;
+        }
+
+        .original-preview { 
+            background: #f0f4f8; padding: 12px; border-radius: 6px; 
+            font-size: 0.95em; color: #d35400; margin-bottom: 12px; 
+            border-left: 5px solid #e67e22; max-height: 100px; overflow-y: auto; 
+        }
+
+        input[type="text"] { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+
+        /* Dict Modal Styling */
+        .dict-item {
+            display: grid; grid-template-columns: 1fr 1.2fr 40px; gap: 8px;
+            padding: 8px; border-bottom: 1px solid #eee; align-items: center;
+        }
+        .dict-item span { font-size: 0.9em; word-break: break-all; }
+        .dict-item input { margin: 0; padding: 4px; font-size: 0.85em; }
+
+        #toc-menu { 
+            position: fixed; right: 20px; top: 140px; background: white; 
+            border: 1px solid #ccc; max-height: 60vh; overflow-y: auto; 
+            width: 280px; display: none; padding: 10px; z-index: 99; 
+        }
+        .toc-item { cursor: pointer; padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9em; }
+        .toc-item.active { background-color: #e3f2fd; font-weight: bold; border-left: 5px solid #1976d2; }
+
+        button { padding: 8px 16px; cursor: pointer; border-radius: 6px; border: 1px solid #ddd; background: #fff; font-family: inherit; }
+        .primary-btn { background: #e3f2fd; color: #1976d2; border-color: #90caf9; }
         .danger-btn { background: #fff5f5; color: #c0392b; border-color: #fb8c8c; }
-        .primary-btn { background: #e3f2fd; border-color: #90caf9; color: #1976d2; }
-        .original-preview { background: #f8f9fa; padding: 10px; border-radius: 4px; font-size: 0.85em; color: #d35400; margin-bottom: 10px; border-left: 3px solid #e67e22; word-break: break-all; }
     </style>
 </head>
 <body>
 
 <div id="controls">
     <input type="file" id="fileInput" accept=".txt">
+    <div class="settings-bar">
+        <label>ขนาด:</label>
+        <input type="number" id="fontSizeInput" value="20" oninput="updateStyle()">
+        <label>ระยะบรรทัด:</label>
+        <input type="number" id="lineHeightInput" value="1.8" step="0.1" oninput="updateStyle()">
+    </div>
     <button onclick="toggleTOC()">📖 สารบัญ</button>
     <button onclick="changeChapter(-1)">ก่อนหน้า (←)</button>
     <button onclick="changeChapter(1)">ถัดไป (→)</button>
     <button class="primary-btn" onclick="openDictModal()">🗂️ คลังคำศัพท์</button>
-    <button class="danger-btn" onclick="clearDictionary()">🗑️ ล้างทั้งหมด</button>
+    <button class="danger-btn" onclick="clearDictionary()">🗑️ ล้างคลัง</button>
 </div>
 
 <div id="edit-modal" class="modal">
-    <h4 style="margin-top:0">🔧 แก้ไขคำศัพท์</h4>
+    <h4 style="margin-top:0">🔧 แก้ไขคำแปล</h4>
     <div id="rawPreview" class="original-preview"></div>
-    <label style="font-size: 0.8em;">คำจีนต้นฉบับ:</label>
-    <input type="text" id="originalWord" style="width: 100%; margin-bottom: 10px; padding: 5px; box-sizing: border-box;">
-    <label style="font-size: 0.8em;">เปลี่ยนเป็นไทย:</label>
-    <input type="text" id="replaceWith" placeholder="คำแปล..." style="width: 100%; margin-bottom: 15px; padding: 5px; box-sizing: border-box;">
-    <div style="display: flex; gap: 10px;">
-        <button onclick="saveWord()" style="flex: 1; background: #2ecc71; color: white; border:none;">ตกลง</button>
+    <input type="text" id="originalWord" placeholder="คำจีนที่พบ...">
+    <input type="text" id="replaceWith" placeholder="เปลี่ยนเป็นไทย...">
+    <div style="display: flex; gap: 10px; margin-top:10px;">
+        <button onclick="saveWord()" style="flex: 2; background: #2ecc71; color: white; border:none; font-weight:bold;">บันทึก</button>
         <button onclick="closeModal('edit-modal')" style="flex: 1;">ยกเลิก</button>
     </div>
 </div>
 
-<div id="dict-modal" class="modal">
-    <h3 style="margin-top: 0;">🗂️ คลังคำศัพท์</h3>
-    <div id="dict-list-container"></div>
+<div id="dict-modal" class="modal" style="width: 450px;">
+    <h3 style="margin-top:0">🗂️ รายการคำศัพท์ที่แก้ไขแล้ว</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1.2fr 40px; padding: 5px 8px; font-weight: bold; background: #eee; font-size: 0.8em;">
+        <div>ต้นฉบับ</div><div>คำแปล (แก้ได้)</div><div>ลบ</div>
+    </div>
+    <div id="dict-list-container" style="max-height: 350px; overflow-y: auto; border: 1px solid #eee;"></div>
     <div style="text-align: right; margin-top: 15px;">
-        <button onclick="closeModal('dict-modal')">ปิดหน้าต่าง</button>
+        <button onclick="closeModal('dict-modal')" class="primary-btn">ปิด</button>
     </div>
 </div>
 
@@ -61,7 +129,7 @@
 
 <div id="reader-container">
     <div id="content-display">
-        <h2 style="text-align: center;">กรุณาเลือกไฟล์นิยาย (.txt)</h2>
+        <h2 style="text-align: center; color: #ccc;">กรุณาเลือกไฟล์นิยาย (.txt)</h2>
     </div>
 </div>
 
@@ -69,12 +137,29 @@
     let rawChapters = []; 
     let currentChapterIndex = 0;
     let customDict = JSON.parse(localStorage.getItem('novel_dict_v3') || '{}'); 
-    let currentFileName = "";
+
+    // --- ฟังก์ชันคีย์บอร์ด (แก้ไขแล้ว) ---
+    document.addEventListener('keydown', function(e) {
+        // ไม่ทำงานถ้ากำลังพิมพ์ในช่อง Input ใดๆ
+        if (["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
+        
+        if (e.key === 'ArrowRight') {
+            changeChapter(1);
+        } else if (e.key === 'ArrowLeft') {
+            changeChapter(-1);
+        }
+    });
+
+    function updateStyle() {
+        const size = document.getElementById('fontSizeInput').value;
+        const height = document.getElementById('lineHeightInput').value;
+        document.documentElement.style.setProperty('--content-font-size', size + 'px');
+        document.documentElement.style.setProperty('--content-line-height', height);
+    }
 
     document.getElementById('fileInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
-        currentFileName = file.name;
         const reader = new FileReader();
         reader.onload = (content) => {
             const text = content.target.result;
@@ -96,61 +181,90 @@
 
         const htmlLines = lines.map(line => {
             if(!line.trim()) return "";
-            let originalRaw = line.trim();
-            let translatedLine = originalRaw;
-
+            let raw = line.trim();
+            let translated = raw;
             for (const oldWord of sortedKeys) {
                 const regex = new RegExp(escapeRegExp(oldWord), 'g');
-                translatedLine = translatedLine.replace(regex, customDict[oldWord]);
+                translated = translated.replace(regex, customDict[oldWord]);
             }
-            // เก็บต้นฉบับไว้ใน data-raw เพื่อให้คลิกแล้วดึงกลับมาได้แม้จะแปลไทยไปแล้ว
-            return `<p onclick="handleParaClick(this)" data-raw="${encodeURIComponent(originalRaw)}">${translatedLine}</p>`;
+            return `<p onclick="handleParaClick(this)" data-raw="${encodeURIComponent(raw)}">${translated}</p>`;
         }).join('');
 
-        display.innerHTML = `<h2>บทที่ ${index + 1}</h2>` + htmlLines;
+        display.innerHTML = `<h2>ตอนที่ ${index + 1}</h2>` + htmlLines;
         window.scrollTo(0,0);
         updateTOCActiveState();
     }
 
     function handleParaClick(el) {
-        const selectedText = window.getSelection().toString().trim();
-        const rawText = decodeURIComponent(el.getAttribute('data-raw'));
-        
-        document.getElementById('rawPreview').innerText = "ต้นฉบับ: " + rawText;
-        
-        // ถ้าสิ่งที่คลุมดำเป็นภาษาจีน ให้ใส่ในช่องเลย
-        if (/[\u4E00-\u9FA5]/.test(selectedText)) {
-            document.getElementById('originalWord').value = selectedText;
-        } else {
-            document.getElementById('originalWord').value = "";
-            document.getElementById('originalWord').placeholder = "ก๊อปคำจีนจากด้านบนวางที่นี่";
-        }
-        
-        document.getElementById('replaceWith').value = customDict[document.getElementById('originalWord').value] || "";
+        const selected = window.getSelection().toString().trim();
+        const raw = decodeURIComponent(el.getAttribute('data-raw'));
+        document.getElementById('rawPreview').innerText = "ต้นฉบับ: " + raw;
+        document.getElementById('originalWord').value = selected || "";
+        document.getElementById('replaceWith').value = customDict[selected] || "";
         document.getElementById('edit-modal').style.display = 'block';
     }
 
     function saveWord() {
-        const oldW = document.getElementById('originalWord').value.trim();
-        const newW = document.getElementById('replaceWith').value.trim();
-        if (oldW) {
-            customDict[oldW] = newW;
-            localStorage.setItem('novel_dict_v3', JSON.stringify(customDict));
+        const k = document.getElementById('originalWord').value.trim();
+        const v = document.getElementById('replaceWith').value.trim();
+        if (k) {
+            customDict[k] = v;
+            saveAndRefresh();
             closeModal('edit-modal');
-            renderChapter(currentChapterIndex);
         }
     }
 
-    // --- ฟังก์ชันเสริม (คงโครงสร้างเดิม) ---
+    // --- ฟังก์ชันคลังคำศัพท์ (แก้ไขคำแปลได้) ---
+    function openDictModal() {
+        const container = document.getElementById('dict-list-container');
+        container.innerHTML = '';
+        const keys = Object.keys(customDict);
+        
+        if (keys.length === 0) {
+            container.innerHTML = '<div style="padding:20px; text-align:center; color:#999;">ไม่มีคำศัพท์ที่บันทึกไว้</div>';
+        } else {
+            keys.forEach(k => {
+                const div = document.createElement('div');
+                div.className = 'dict-item';
+                div.innerHTML = `
+                    <span title="${k}">${k}</span>
+                    <input type="text" value="${customDict[k]}" onchange="updateDictValue('${k}', this.value)">
+                    <button onclick="deleteDict('${k}')" style="color:red; border:none; background:none;">✕</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+        document.getElementById('dict-modal').style.display = 'block';
+    }
+
+    function updateDictValue(key, newValue) {
+        if (newValue.trim()) {
+            customDict[key] = newValue.trim();
+            saveAndRefresh();
+        }
+    }
+
+    function deleteDict(k) {
+        if (confirm(`ลบคำแปลของ "${k}"?`)) {
+            delete customDict[k];
+            saveAndRefresh();
+            openDictModal();
+        }
+    }
+
+    function saveAndRefresh() {
+        localStorage.setItem('novel_dict_v3', JSON.stringify(customDict));
+        renderChapter(currentChapterIndex);
+    }
+
     function buildTOC() {
         const toc = document.getElementById('toc-menu');
-        toc.innerHTML = '<h3>รายชื่อบท</h3>';
+        toc.innerHTML = '<h4>รายชื่อตอน</h4>';
         rawChapters.forEach((ch, i) => {
-            const title = ch.substring(0, 20).replace(/\n/g, ' ').trim();
             const d = document.createElement('div');
             d.className = 'toc-item';
             d.id = `toc-ch-${i}`;
-            d.innerText = `${i + 1}. ${title}...`;
+            d.innerText = `บทที่ ${i + 1}: ${ch.substring(0, 20).trim()}...`;
             d.onclick = () => { renderChapter(i); toggleTOC(); };
             toc.appendChild(d);
         });
@@ -164,32 +278,16 @@
 
     function toggleTOC() { 
         const m = document.getElementById('toc-menu'); 
-        m.style.display = m.style.display === 'block' ? 'none' : 'block'; 
+        m.style.display = (m.style.display === 'block') ? 'none' : 'block'; 
     }
 
-    function openDictModal() {
-        const container = document.getElementById('dict-list-container');
-        container.innerHTML = '';
-        const keys = Object.keys(customDict);
-        if (keys.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:gray;">ยังไม่มีข้อมูล</p>';
-        } else {
-            keys.forEach(k => {
-                const div = document.createElement('div');
-                div.className = 'dict-item';
-                div.innerHTML = `<span style="font-size:0.8em; flex:1;"><b>${k}</b></span><span>➡️</span><input type="text" value="${customDict[k]}" onchange="updateDict('${k}', this.value)"><button onclick="deleteDict('${k}')">✕</button>`;
-                container.appendChild(div);
-            });
-        }
-        document.getElementById('dict-modal').style.display = 'block';
-    }
-
-    function updateDict(k, v) { customDict[k] = v; localStorage.setItem('novel_dict_v3', JSON.stringify(customDict)); renderChapter(currentChapterIndex); }
-    function deleteDict(k) { delete customDict[k]; localStorage.setItem('novel_dict_v3', JSON.stringify(customDict)); openDictModal(); renderChapter(currentChapterIndex); }
-    function clearDictionary() { if(confirm("ล้างทั้งหมด?")) { customDict = {}; localStorage.removeItem('novel_dict_v3'); renderChapter(currentChapterIndex); } }
+    function clearDictionary() { if(confirm("ล้างคลังคำศัพท์ทั้งหมด?")) { customDict = {}; saveAndRefresh(); if(document.getElementById('dict-modal').style.display === 'block') openDictModal(); } }
     function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-    function changeChapter(step) { renderChapter(currentChapterIndex + step); }
+    function changeChapter(step) { 
+        const n = currentChapterIndex + step;
+        if (n >= 0 && n < rawChapters.length) renderChapter(n);
+    }
 </script>
 </body>
 </html>
