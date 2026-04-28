@@ -3,164 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Novel Reader v2</title>
+    <title>Simple Novel Reader</title>
     <style>
-        :root { --bg-color: #f4f1ea; --text-color: #2c3e50; }
-        body { background-color: var(--bg-color); color: var(--text-color); font-family: 'Noto Sans Thai', 'Segoe UI', Tahoma, sans-serif; line-height: 1.8; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        #controls { position: fixed; top: 0; width: 100%; background: #fff; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: center; gap: 10px; z-index: 100; flex-wrap: wrap; }
-        #reader-container { max-width: 800px; width: 90%; margin-top: 140px; margin-bottom: 50px; padding: 30px; background: white; min-height: 80vh; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
-        p.novel-para { margin-bottom: 1.5em; text-indent: 2em; cursor: pointer; font-size: 1.15em; padding: 5px; border-radius: 5px; }
-        p.novel-para:hover { background: #fdfae1; outline: 1px solid #e0e0e0; }
-        .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.3); display: none; z-index: 1000; width: 90%; max-width: 450px; }
-        .original-preview { background: #f0f4f8; padding: 15px; border-radius: 8px; font-size: 1em; color: #333; border-left: 5px solid #3498db; margin: 10px 0; word-break: break-all; max-height: 120px; overflow-y: auto; }
-        input[type="text"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 1em; }
-        button { padding: 10px 18px; cursor: pointer; border-radius: 8px; border: 1px solid #ddd; background: #fff; font-weight: 500; }
-        .btn-success { background: #27ae60; color: white; border: none; }
-        #toc-menu { position: fixed; right: 20px; top: 140px; background: white; border: 1px solid #ddd; max-height: 60vh; overflow-y: auto; width: 260px; display: none; padding: 10px; z-index: 99; border-radius: 8px; box-shadow: -5px 5px 15px rgba(0,0,0,0.1); }
-        .toc-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 0.9em; }
-        .toc-item:hover { background: #f8f9fa; }
-        .toc-item.active { border-left: 4px solid #3498db; background: #ebf5fb; font-weight: bold; }
+        :root { --bg: #f4f1ea; --text: #2c3e50; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; line-height: 1.8; margin: 0; padding-top: 120px; display: flex; flex-direction: column; align-items: center; }
+        #controls { position: fixed; top: 0; width: 100%; background: white; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; justify-content: center; gap: 10px; z-index: 100; flex-wrap: wrap; }
+        #reader { max-width: 800px; width: 90%; background: white; padding: 30px; min-height: 80vh; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
+        p { margin-bottom: 1.5em; text-indent: 2em; cursor: pointer; padding: 5px; transition: 0.2s; }
+        p:hover { background: #fdfae1; }
+        .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.3); display: none; z-index: 1000; width: 350px; }
+        .original-box { background: #f0f4f8; padding: 10px; border-radius: 5px; font-size: 0.9em; margin-bottom: 10px; word-break: break-all; border-left: 4px solid #3498db; }
+        input { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { padding: 8px 15px; cursor: pointer; border-radius: 5px; border: 1px solid #ccc; background: white; }
+        .btn-ok { background: #2ecc71; color: white; border: none; }
     </style>
 </head>
 <body>
 
 <div id="controls">
-    <input type="file" id="fileInput" accept=".txt">
-    <button onclick="toggleTOC()">📖 สารบัญ</button>
+    <input type="file" id="fileInput" accept=".txt" style="width: auto;">
     <button onclick="changeChapter(-1)">ก่อนหน้า</button>
     <button onclick="changeChapter(1)">ถัดไป</button>
-    <button onclick="openDictModal()">🗂️ คำศัพท์</button>
+    <button onclick="showDict()">คลังคำศัพท์</button>
 </div>
 
 <div id="edit-modal" class="modal">
-    <h3 style="margin:0 0 15px 0">แก้ไขคำแปล</h3>
-    <div class="original-preview" id="originalContext"></div>
-    <input type="text" id="originalWord" placeholder="ก๊อปปี้คำจีนจากกล่องบนมาวางที่นี่">
-    <input type="text" id="replaceWith" placeholder="ใส่คำแปลที่ต้องการ">
-    <div style="display:flex; gap:10px; margin-top:15px">
-        <button onclick="saveWord()" class="btn-success" style="flex:2">บันทึก</button>
-        <button onclick="closeModal('edit-modal')" style="flex:1">ยกเลิก</button>
+    <h3 style="margin-top:0">แก้ไขคำแปล</h3>
+    <div id="rawContext" class="original-box"></div>
+    <label>คำจีนต้นฉบับ:</label>
+    <input type="text" id="targetWord" placeholder="ใส่คำจีนที่ต้องการแก้">
+    <label>เปลี่ยนเป็นไทย:</label>
+    <input type="text" id="thaiWord" placeholder="ใส่คำไทยที่ต้องการ">
+    <div style="display:flex; gap:10px;">
+        <button onclick="saveWord()" class="btn-ok" style="flex:2">บันทึก</button>
+        <button onclick="closeModal()" style="flex:1">ปิด</button>
     </div>
 </div>
 
-<div id="dict-modal" class="modal">
-    <h3>🗂️ รายการที่บันทึกไว้</h3>
-    <div id="dict-list" style="max-height:300px; overflow-y:auto"></div>
-    <div style="text-align:right; margin-top:20px">
-        <button onclick="closeModal('dict-modal')">ปิด</button>
-    </div>
+<div id="reader">
+    <div id="output"><h2 style="text-align:center">กรุณาเลือกไฟล์ .txt</h2></div>
 </div>
 
-<div id="toc-menu"></div>
-
-<div id="reader-container">
-    <div id="content-display">
-        <h2 style="text-align:center; color:#999">กรุณาเลือกไฟล์ .txt เพื่อเริ่มต้น</h2>
-    </div>
-</div>
 <script>
     let chapters = [];
-    let currentIndex = 0;
-    let dictionary = JSON.parse(localStorage.getItem('my_novel_dict') || '{}');
+    let currentIdx = 0;
+    let dict = JSON.parse(localStorage.getItem('myDict') || '{}');
 
-    document.getElementById('fileInput').addEventListener('change', function(e) {
+    document.getElementById('fileInput').onchange = function(e) {
         const file = e.target.files[0];
-        if (!file) return;
         const reader = new FileReader();
-        reader.onload = (ev) => {
-            const content = ev.target.result;
-            // แยกบท: รองรับทั้ง Chapter, บทที่, หรือ 第...章
-            const regex = /(?=Chapter|บทที่|第[0-9一二三四五六七八九十百千]+[章节回]|\n{2,}(?=[^\n]{1,20}\n))/i;
-            chapters = content.split(regex).filter(s => s.trim().length > 5);
-            buildTOC();
-            render(0);
+        reader.onload = function(ev) {
+            const text = ev.target.result;
+            const reg = /(?=Chapter|บทที่|第[0-9一二三四五六七八九十百千]+[章节回])/i;
+            chapters = text.split(reg).filter(s => s.trim().length > 5);
+            render();
         };
-        reader.readAsText(file, 'UTF-8'); // กำหนด Encoding ให้รองรับภาษาจีน
-    });
+        reader.readAsText(file);
+    };
 
-    function render(idx) {
-        if (idx < 0 || idx >= chapters.length) return;
-        currentIndex = idx;
-        const container = document.getElementById('content-display');
-        const sortedKeys = Object.keys(dictionary).sort((a,b) => b.length - a.length);
+    function render() {
+        if (!chapters[currentIdx]) return;
+        const out = document.getElementById('output');
+        const sortedKeys = Object.keys(dict).sort((a,b) => b.length - a.length);
         
-        const html = chapters[idx].trim().split('\n').map(line => {
-            if (!line.trim()) return "";
-            let text = line.trim();
-            let raw = text;
+        const html = chapters[currentIdx].trim().split('\n').map(line => {
+            let raw = line.trim();
+            if (!raw) return "";
+            let display = raw;
             sortedKeys.forEach(k => {
-                const r = new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-                text = text.replace(r, dictionary[k]);
+                display = display.split(k).join(dict[k]);
             });
-            return `<p class="novel-para" onclick="showEdit(this)" title="${raw}">${text}</p>`;
+            return `<p onclick="openEdit(this)" data-raw="${raw}">${display}</p>`;
         }).join('');
-
-        container.innerHTML = `<h2>ตอนที่ ${idx + 1}</h2>` + html;
+        
+        out.innerHTML = `<h2>ตอนที่ ${currentIdx + 1}</h2>${html}`;
         window.scrollTo(0,0);
-        updateTOC();
     }
 
-    function showEdit(el) {
-        const raw = el.getAttribute('title');
-        const selected = window.getSelection().toString().trim();
-        document.getElementById('originalContext').innerText = raw;
-        document.getElementById('originalWord').value = /[\u4E00-\u9FA5]/.test(selected) ? selected : "";
-        document.getElementById('replaceWith').value = dictionary[document.getElementById('originalWord').value] || "";
+    function openEdit(el) {
+        const raw = el.getAttribute('data-raw');
+        const sel = window.getSelection().toString().trim();
+        document.getElementById('rawContext').innerText = raw;
+        document.getElementById('targetWord').value = /[\u4E00-\u9FA5]/.test(sel) ? sel : "";
         document.getElementById('edit-modal').style.display = 'block';
     }
 
     function saveWord() {
-        const k = document.getElementById('originalWord').value.trim();
-        const v = document.getElementById('replaceWith').value.trim();
+        const k = document.getElementById('targetWord').value.trim();
+        const v = document.getElementById('thaiWord').value.trim();
         if (k && v) {
-            dictionary[k] = v;
-            localStorage.setItem('my_novel_dict', JSON.stringify(dictionary));
-            closeModal('edit-modal');
-            render(currentIndex);
+            dict[k] = v;
+            localStorage.setItem('myDict', JSON.stringify(dict));
+            closeModal();
+            render();
         }
     }
 
-    function buildTOC() {
-        const menu = document.getElementById('toc-menu');
-        menu.innerHTML = '<h4>รายชื่อตอน</h4>';
-        chapters.forEach((c, i) => {
-            const d = document.createElement('div');
-            d.className = 'toc-item';
-            d.id = `toc-${i}`;
-            d.innerText = `ตอนที่ ${i+1}: ${c.substring(0,15)}...`;
-            d.onclick = () => { render(i); toggleTOC(); };
-            menu.appendChild(d);
-        });
+    function closeModal() { document.getElementById('edit-modal').style.display = 'none'; }
+    function changeChapter(n) { currentIdx += n; render(); }
+    function showDict() { 
+        let str = Object.entries(dict).map(([k,v]) => `${k} -> ${v}`).join('\n');
+        alert(str || "ยังไม่มีข้อมูล");
     }
-
-    function updateTOC() {
-        document.querySelectorAll('.toc-item').forEach((el, i) => {
-            el.classList.toggle('active', i === currentIndex);
-        });
-    }
-
-    function openDictModal() {
-        const list = document.getElementById('dict-list');
-        list.innerHTML = '';
-        Object.keys(dictionary).forEach(k => {
-            const item = document.createElement('div');
-            item.style = "display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee";
-            item.innerHTML = `<span><b>${k}</b> ➔ ${dictionary[k]}</span> <button onclick="deleteKey('${k}')" style="padding:2px 5px; background:#ffeded; color:red; border-color:#ffcaca">✕</button>`;
-            list.appendChild(item);
-        });
-        document.getElementById('dict-modal').style.display = 'block';
-    }
-
-    function deleteKey(k) {
-        delete dictionary[k];
-        localStorage.setItem('my_novel_dict', JSON.stringify(dictionary));
-        openDictModal();
-        render(currentIndex);
-    }
-
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-    function toggleTOC() { const m = document.getElementById('toc-menu'); m.style.display = m.style.display === 'block' ? 'none' : 'block'; }
-    function changeChapter(s) { render(currentIndex + s); }
 </script>
 </body>
 </html>
