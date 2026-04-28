@@ -3,23 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Novel Reader v2</title>
+    <title>Multi-Language Novel Reader (Full Restore)</title>
     <style>
         :root { --bg-color: #f4f1ea; --text-color: #2c3e50; }
-        body { background-color: var(--bg-color); color: var(--text-color); font-family: 'Noto Sans Thai', 'Segoe UI', Tahoma, sans-serif; line-height: 1.8; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        body { background-color: var(--bg-color); color: var(--text-color); font-family: 'Segoe UI', Tahoma, 'Noto Sans Thai','PingFang SC', sans-serif; line-height: 1.8; margin: 0; display: flex; flex-direction: column; align-items: center; }
         #controls { position: fixed; top: 0; width: 100%; background: #fff; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: center; gap: 10px; z-index: 100; flex-wrap: wrap; }
-        #reader-container { max-width: 800px; width: 90%; margin-top: 140px; margin-bottom: 50px; padding: 30px; background: white; min-height: 80vh; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
-        p.novel-para { margin-bottom: 1.5em; text-indent: 2em; cursor: pointer; font-size: 1.15em; padding: 5px; border-radius: 5px; }
-        p.novel-para:hover { background: #fdfae1; outline: 1px solid #e0e0e0; }
-        .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.3); display: none; z-index: 1000; width: 90%; max-width: 450px; }
-        .original-preview { background: #f0f4f8; padding: 15px; border-radius: 8px; font-size: 1em; color: #333; border-left: 5px solid #3498db; margin: 10px 0; word-break: break-all; max-height: 120px; overflow-y: auto; }
-        input[type="text"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 1em; }
-        button { padding: 10px 18px; cursor: pointer; border-radius: 8px; border: 1px solid #ddd; background: #fff; font-weight: 500; }
-        .btn-success { background: #27ae60; color: white; border: none; }
-        #toc-menu { position: fixed; right: 20px; top: 140px; background: white; border: 1px solid #ddd; max-height: 60vh; overflow-y: auto; width: 260px; display: none; padding: 10px; z-index: 99; border-radius: 8px; box-shadow: -5px 5px 15px rgba(0,0,0,0.1); }
-        .toc-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 0.9em; }
-        .toc-item:hover { background: #f8f9fa; }
-        .toc-item.active { border-left: 4px solid #3498db; background: #ebf5fb; font-weight: bold; }
+        #reader-container { max-width: 800px; width: 90%; margin-top: 130px; margin-bottom: 50px; padding: 30px; background: white; min-height: 80vh; }
+        p { margin-bottom: 1.5em; text-indent: 2em; cursor: help; font-size: 1.1em; }
+        p:hover { background: #fdfae1; }
+        .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.3); display: none; z-index: 1000; width: 320px; }
+        #dict-modal { width: 450px; max-height: 70vh; overflow-y: auto; }
+        .dict-item { display: flex; align-items: center; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; gap: 5px; }
+        .dict-item input { padding: 4px; border: 1px solid #ddd; border-radius: 4px; width: 110px; }
+        #toc-menu { position: fixed; right: 20px; top: 130px; background: white; border: 1px solid #ccc; max-height: 60vh; overflow-y: auto; width: 250px; display: none; padding: 10px; box-shadow: -2px 2px 10px rgba(0,0,0,0.1); z-index: 99; scroll-behavior: smooth; }
+        .toc-item { cursor: pointer; padding: 8px; border-bottom: 1px solid #eee; font-size: 0.9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .toc-item.active { background-color: #e3f2fd; font-weight: bold; border-left: 4px solid #1976d2; }
+        button { padding: 8px 15px; cursor: pointer; border-radius: 5px; border: 1px solid #ddd; background: #fff; transition: 0.2s; }
+        button:hover { background: #f0f0f0; }
+        .danger-btn { background: #fff5f5; color: #c0392b; border-color: #fb8c8c; }
+        .primary-btn { background: #e3f2fd; border-color: #90caf9; color: #1976d2; }
+        .original-preview { background: #f8f9fa; padding: 10px; border-radius: 4px; font-size: 0.85em; color: #d35400; margin-bottom: 10px; border-left: 3px solid #e67e22; word-break: break-all; }
     </style>
 </head>
 <body>
@@ -27,27 +30,30 @@
 <div id="controls">
     <input type="file" id="fileInput" accept=".txt">
     <button onclick="toggleTOC()">📖 สารบัญ</button>
-    <button onclick="changeChapter(-1)">ก่อนหน้า</button>
-    <button onclick="changeChapter(1)">ถัดไป</button>
-    <button onclick="openDictModal()">🗂️ คำศัพท์</button>
+    <button onclick="changeChapter(-1)">ก่อนหน้า (←)</button>
+    <button onclick="changeChapter(1)">ถัดไป (→)</button>
+    <button class="primary-btn" onclick="openDictModal()">🗂️ คลังคำศัพท์</button>
+    <button class="danger-btn" onclick="clearDictionary()">🗑️ ล้างทั้งหมด</button>
 </div>
 
 <div id="edit-modal" class="modal">
-    <h3 style="margin:0 0 15px 0">แก้ไขคำแปล</h3>
-    <div class="original-preview" id="originalContext"></div>
-    <input type="text" id="originalWord" placeholder="ก๊อปปี้คำจีนจากกล่องบนมาวางที่นี่">
-    <input type="text" id="replaceWith" placeholder="ใส่คำแปลที่ต้องการ">
-    <div style="display:flex; gap:10px; margin-top:15px">
-        <button onclick="saveWord()" class="btn-success" style="flex:2">บันทึก</button>
-        <button onclick="closeModal('edit-modal')" style="flex:1">ยกเลิก</button>
+    <h4 style="margin-top:0">🔧 แก้ไขคำศัพท์</h4>
+    <div id="rawPreview" class="original-preview"></div>
+    <label style="font-size: 0.8em;">คำจีนต้นฉบับ:</label>
+    <input type="text" id="originalWord" style="width: 100%; margin-bottom: 10px; padding: 5px; box-sizing: border-box;">
+    <label style="font-size: 0.8em;">เปลี่ยนเป็นไทย:</label>
+    <input type="text" id="replaceWith" placeholder="คำแปล..." style="width: 100%; margin-bottom: 15px; padding: 5px; box-sizing: border-box;">
+    <div style="display: flex; gap: 10px;">
+        <button onclick="saveWord()" style="flex: 1; background: #2ecc71; color: white; border:none;">ตกลง</button>
+        <button onclick="closeModal('edit-modal')" style="flex: 1;">ยกเลิก</button>
     </div>
 </div>
 
 <div id="dict-modal" class="modal">
-    <h3>🗂️ รายการที่บันทึกไว้</h3>
-    <div id="dict-list" style="max-height:300px; overflow-y:auto"></div>
-    <div style="text-align:right; margin-top:20px">
-        <button onclick="closeModal('dict-modal')">ปิด</button>
+    <h3 style="margin-top: 0;">🗂️ คลังคำศัพท์</h3>
+    <div id="dict-list-container"></div>
+    <div style="text-align: right; margin-top: 15px;">
+        <button onclick="closeModal('dict-modal')">ปิดหน้าต่าง</button>
     </div>
 </div>
 
@@ -55,113 +61,135 @@
 
 <div id="reader-container">
     <div id="content-display">
-        <h2 style="text-align:center; color:#999">กรุณาเลือกไฟล์ .txt เพื่อเริ่มต้น</h2>
+        <h2 style="text-align: center;">กรุณาเลือกไฟล์นิยาย (.txt)</h2>
     </div>
 </div>
 
 <script>
-    let chapters = [];
-    let currentIndex = 0;
-    let dictionary = JSON.parse(localStorage.getItem('my_novel_dict') || '{}');
+    let rawChapters = []; 
+    let currentChapterIndex = 0;
+    let customDict = JSON.parse(localStorage.getItem('novel_dict_v3') || '{}'); 
+    let currentFileName = "";
 
     document.getElementById('fileInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
+        currentFileName = file.name;
         const reader = new FileReader();
-        reader.onload = (ev) => {
-            const content = ev.target.result;
-            // แยกบท: รองรับทั้ง Chapter, บทที่, หรือ 第...章
-            const regex = /(?=Chapter|บทที่|第[0-9一二三四五六七八九十百千]+[章节回]|\n{2,}(?=[^\n]{1,20}\n))/i;
-            chapters = content.split(regex).filter(s => s.trim().length > 5);
+        reader.onload = (content) => {
+            const text = content.target.result;
+            const chapterRegex = /(?=Chapter|บทที่|第[0-9一二三四五六七八九十百千]+[章节回]|\n{2,}(?=[^\n]{1,20}\n))/i;
+            rawChapters = text.split(chapterRegex).filter(c => c.trim().length > 10);
             buildTOC();
-            render(0);
+            renderChapter(0);
         };
-        reader.readAsText(file, 'UTF-8'); // กำหนด Encoding ให้รองรับภาษาจีน
+        reader.readAsText(file);
     });
 
-    function render(idx) {
-        if (idx < 0 || idx >= chapters.length) return;
-        currentIndex = idx;
-        const container = document.getElementById('content-display');
-        const sortedKeys = Object.keys(dictionary).sort((a,b) => b.length - a.length);
+    function renderChapter(index) {
+        if (index < 0 || index >= rawChapters.length) return;
+        currentChapterIndex = index;
+        const display = document.getElementById('content-display');
+        let lines = rawChapters[index].trim().split('\n');
         
-        const html = chapters[idx].trim().split('\n').map(line => {
-            if (!line.trim()) return "";
-            let text = line.trim();
-            let raw = text;
-            sortedKeys.forEach(k => {
-                const r = new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-                text = text.replace(r, dictionary[k]);
-            });
-            return `<p class="novel-para" onclick="showEdit(this)" title="${raw}">${text}</p>`;
+        const sortedKeys = Object.keys(customDict).sort((a, b) => b.length - a.length);
+
+        const htmlLines = lines.map(line => {
+            if(!line.trim()) return "";
+            let originalRaw = line.trim();
+            let translatedLine = originalRaw;
+
+            for (const oldWord of sortedKeys) {
+                const regex = new RegExp(escapeRegExp(oldWord), 'g');
+                translatedLine = translatedLine.replace(regex, customDict[oldWord]);
+            }
+            // เก็บต้นฉบับไว้ใน data-raw เพื่อให้คลิกแล้วดึงกลับมาได้แม้จะแปลไทยไปแล้ว
+            return `<p onclick="handleParaClick(this)" data-raw="${encodeURIComponent(originalRaw)}">${translatedLine}</p>`;
         }).join('');
 
-        container.innerHTML = `<h2>ตอนที่ ${idx + 1}</h2>` + html;
+        display.innerHTML = `<h2>บทที่ ${index + 1}</h2>` + htmlLines;
         window.scrollTo(0,0);
-        updateTOC();
+        updateTOCActiveState();
     }
 
-    function showEdit(el) {
-        const raw = el.getAttribute('title');
-        const selected = window.getSelection().toString().trim();
-        document.getElementById('originalContext').innerText = raw;
-        document.getElementById('originalWord').value = /[\u4E00-\u9FA5]/.test(selected) ? selected : "";
-        document.getElementById('replaceWith').value = dictionary[document.getElementById('originalWord').value] || "";
+    function handleParaClick(el) {
+        const selectedText = window.getSelection().toString().trim();
+        const rawText = decodeURIComponent(el.getAttribute('data-raw'));
+        
+        document.getElementById('rawPreview').innerText = "ต้นฉบับ: " + rawText;
+        
+        // ถ้าสิ่งที่คลุมดำเป็นภาษาจีน ให้ใส่ในช่องเลย
+        if (/[\u4E00-\u9FA5]/.test(selectedText)) {
+            document.getElementById('originalWord').value = selectedText;
+        } else {
+            document.getElementById('originalWord').value = "";
+            document.getElementById('originalWord').placeholder = "ก๊อปคำจีนจากด้านบนวางที่นี่";
+        }
+        
+        document.getElementById('replaceWith').value = customDict[document.getElementById('originalWord').value] || "";
         document.getElementById('edit-modal').style.display = 'block';
     }
 
     function saveWord() {
-        const k = document.getElementById('originalWord').value.trim();
-        const v = document.getElementById('replaceWith').value.trim();
-        if (k && v) {
-            dictionary[k] = v;
-            localStorage.setItem('my_novel_dict', JSON.stringify(dictionary));
+        const oldW = document.getElementById('originalWord').value.trim();
+        const newW = document.getElementById('replaceWith').value.trim();
+        if (oldW) {
+            customDict[oldW] = newW;
+            localStorage.setItem('novel_dict_v3', JSON.stringify(customDict));
             closeModal('edit-modal');
-            render(currentIndex);
+            renderChapter(currentChapterIndex);
         }
     }
 
+    // --- ฟังก์ชันเสริม (คงโครงสร้างเดิม) ---
     function buildTOC() {
-        const menu = document.getElementById('toc-menu');
-        menu.innerHTML = '<h4>รายชื่อตอน</h4>';
-        chapters.forEach((c, i) => {
+        const toc = document.getElementById('toc-menu');
+        toc.innerHTML = '<h3>รายชื่อบท</h3>';
+        rawChapters.forEach((ch, i) => {
+            const title = ch.substring(0, 20).replace(/\n/g, ' ').trim();
             const d = document.createElement('div');
             d.className = 'toc-item';
-            d.id = `toc-${i}`;
-            d.innerText = `ตอนที่ ${i+1}: ${c.substring(0,15)}...`;
-            d.onclick = () => { render(i); toggleTOC(); };
-            menu.appendChild(d);
+            d.id = `toc-ch-${i}`;
+            d.innerText = `${i + 1}. ${title}...`;
+            d.onclick = () => { renderChapter(i); toggleTOC(); };
+            toc.appendChild(d);
         });
     }
 
-    function updateTOC() {
-        document.querySelectorAll('.toc-item').forEach((el, i) => {
-            el.classList.toggle('active', i === currentIndex);
+    function updateTOCActiveState() {
+        document.querySelectorAll('.toc-item').forEach((item, idx) => {
+            item.classList.toggle('active', idx === currentChapterIndex);
         });
+    }
+
+    function toggleTOC() { 
+        const m = document.getElementById('toc-menu'); 
+        m.style.display = m.style.display === 'block' ? 'none' : 'block'; 
     }
 
     function openDictModal() {
-        const list = document.getElementById('dict-list');
-        list.innerHTML = '';
-        Object.keys(dictionary).forEach(k => {
-            const item = document.createElement('div');
-            item.style = "display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee";
-            item.innerHTML = `<span><b>${k}</b> ➔ ${dictionary[k]}</span> <button onclick="deleteKey('${k}')" style="padding:2px 5px; background:#ffeded; color:red; border-color:#ffcaca">✕</button>`;
-            list.appendChild(item);
-        });
+        const container = document.getElementById('dict-list-container');
+        container.innerHTML = '';
+        const keys = Object.keys(customDict);
+        if (keys.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:gray;">ยังไม่มีข้อมูล</p>';
+        } else {
+            keys.forEach(k => {
+                const div = document.createElement('div');
+                div.className = 'dict-item';
+                div.innerHTML = `<span style="font-size:0.8em; flex:1;"><b>${k}</b></span><span>➡️</span><input type="text" value="${customDict[k]}" onchange="updateDict('${k}', this.value)"><button onclick="deleteDict('${k}')">✕</button>`;
+                container.appendChild(div);
+            });
+        }
         document.getElementById('dict-modal').style.display = 'block';
     }
 
-    function deleteKey(k) {
-        delete dictionary[k];
-        localStorage.setItem('my_novel_dict', JSON.stringify(dictionary));
-        openDictModal();
-        render(currentIndex);
-    }
-
+    function updateDict(k, v) { customDict[k] = v; localStorage.setItem('novel_dict_v3', JSON.stringify(customDict)); renderChapter(currentChapterIndex); }
+    function deleteDict(k) { delete customDict[k]; localStorage.setItem('novel_dict_v3', JSON.stringify(customDict)); openDictModal(); renderChapter(currentChapterIndex); }
+    function clearDictionary() { if(confirm("ล้างทั้งหมด?")) { customDict = {}; localStorage.removeItem('novel_dict_v3'); renderChapter(currentChapterIndex); } }
+    function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-    function toggleTOC() { const m = document.getElementById('toc-menu'); m.style.display = m.style.display === 'block' ? 'none' : 'block'; }
-    function changeChapter(s) { render(currentIndex + s); }
+    function changeChapter(step) { renderChapter(currentChapterIndex + step); }
 </script>
 </body>
 </html>
